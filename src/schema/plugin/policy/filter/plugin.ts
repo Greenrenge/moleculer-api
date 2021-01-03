@@ -92,8 +92,8 @@ export class FilterPolicyPlugin extends PolicyPlugin<FilterPolicyPluginSchema, F
         }
         if (!authorized) {
           // TODO: normalize error
-          const error: any = new Error("permission denied");
-          error.statusCode = 401;
+          const error: any = new Error("Forbidden");
+          error.statusCode = 403;
           error.description = descriptionsMap.get(tester);
           if (this.opts.showOriginalError) {
             error.originalError = originalError ? originalError.message : null;
