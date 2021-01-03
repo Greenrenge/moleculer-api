@@ -86,9 +86,8 @@ export class ScopePolicyPlugin extends PolicyPlugin<ScopePolicyPluginSchema, Sco
       const contextScopes = this.opts.getScopesFromContext(args.context);
       for (const requiredScope of requiredScopes as string[]) {
         if (!contextScopes.includes(requiredScope)) {
-          // TODO: normalize error
-          const error: any = new Error("permission denied");
-          error.statusCode = 401;
+          const error: any = new Error("Forbidden");
+          error.statusCode = 403;
           error.expected = requiredScopes;
           error.actual = contextScopes;
           error.description = descriptionsMap[requiredScope];
