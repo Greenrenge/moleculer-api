@@ -151,7 +151,7 @@ describe("schema policy should work", () => {
         }
       })
     ).rejects.toThrow(expect.objectContaining({
-      message: "permission denied",
+      message: "Forbidden",
       actual: [],
       expected: ["echo-scope", "echo-foo-scope"],
       description: [policy.call[0].description],
@@ -204,7 +204,7 @@ describe("schema policy should work", () => {
         }
       })
     ).rejects.toThrow(expect.objectContaining({
-      message: "permission denied",
+      message: "Forbidden",
       actual: ["echo-scope"],
       expected: ["echo-scope", "echo-bar-scope"],
       description: [
@@ -232,7 +232,7 @@ describe("schema policy should work", () => {
         }
       })
     ).rejects.toThrow(expect.objectContaining({
-      message: "permission denied",
+      message: "Forbidden",
       description: [
         policy.call[2].description,
       ],
