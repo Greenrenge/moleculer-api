@@ -40,6 +40,66 @@ Moleculer API Gateway는 분산 서비스 환경에서 동적으로 마이크로
   * OAuth2 scope 기반 접근 제어
   * JavaScript [FBAC; Function Based Access Control](https://arxiv.org/abs/1609.04514) 기반 접근 제어
 
+## How to use
+
+```
+// math.service.js
+module.exports = {
+  name: 'math',
+  metadata: {
+    api: {
+      branch: 'master',
+      policy: {
+        call: [
+          {
+            actions: ['math.action.authorization'],
+            description: 'Unauthorized',
+            scope: ['sports'],
+            filter: `({ context, params }) => {
+              if (test authorization here) {
+                return true;
+              }
+              return false;
+            }`,
+          },
+          {
+            actions: ['math.action.*'],
+            description: 'Authentication required',
+            protected: true,
+          },
+        ],
+      },
+      protocol: {
+        GraphQL: Schema,
+      },
+    },
+  },
+  actions: {
+    "action": {
+      parmas: {
+        ...
+      },
+      async handler({ params }) {
+      }
+    },
+    "action.authorization": {
+      parmas: {
+        ...
+      },
+      async handler({ params }) {
+      }
+    },
+  },
+};
+
+```
+
+
+
+
+
+
+
 ## Development
 
 ### 1. Yarn Scripts
