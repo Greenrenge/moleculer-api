@@ -94,6 +94,7 @@ export class FilterPolicyPlugin extends PolicyPlugin<FilterPolicyPluginSchema, F
           // TODO: normalize error
           const error: any = new Error("Forbidden");
           error.statusCode = 403;
+          error.code = 403;
           error.description = descriptionsMap.get(tester);
           if (this.opts.showOriginalError) {
             error.originalError = originalError ? originalError.message : null;

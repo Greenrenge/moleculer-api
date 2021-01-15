@@ -60,7 +60,9 @@ export const createAuthContextOIDCParser = (opts: AuthContextOIDCParserOptions):
         })
         .catch(error => {
           const err: any = new Error(error.message); // TODO: normalize error
-          err.status = 401;
+          error.statusCode = 401;
+          err.statusCode = 401;
+          err.code = 401;
           throw err;
         });
     }
@@ -76,7 +78,8 @@ export const createAuthContextOIDCParser = (opts: AuthContextOIDCParserOptions):
         })
         .catch(error => {
           const err: any = new Error(error.message); // TODO: normalize error
-          err.status = 401;
+          error.statusCode = 401;
+          err.code = 401;
           throw err;
         });
     }

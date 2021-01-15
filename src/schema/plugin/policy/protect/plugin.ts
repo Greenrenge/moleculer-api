@@ -69,6 +69,7 @@ export class ProtectPolicyPlugin extends PolicyPlugin<ProtectPolicyPluginSchema,
         if(!(context.auth && context.auth.identity)) {
           const error: any = new Error("Unauthenticated");
           error.statusCode = 401;
+          error.code = 401;
           error.description = 'requires signin'
           throw error;
         }
