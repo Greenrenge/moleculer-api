@@ -88,6 +88,7 @@ export class ScopePolicyPlugin extends PolicyPlugin<ScopePolicyPluginSchema, Sco
         if (!contextScopes.includes(requiredScope)) {
           const error: any = new Error("Forbidden");
           error.statusCode = 403;
+          error.code = 403;
           error.expected = requiredScopes;
           error.actual = contextScopes;
           error.description = descriptionsMap[requiredScope];
