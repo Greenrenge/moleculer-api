@@ -60,7 +60,9 @@ export class AuthContextFactory extends APIRequestContextFactory<AuthContext> {
     }
 
     // get context from LRU cache
-    let context = this.cache.get(rawToken);
+    // let context = this.cache.get(rawToken);
+    // FIXME:should eable this later, it is disabled to fix authority sync issue. should be reset whenever identity.updaed is callled
+    let context = null;
 
     // get context from token
     if (!context) {
