@@ -63,8 +63,6 @@ export class ProtectPolicyPlugin extends PolicyPlugin<ProtectPolicyPluginSchema,
 
     return (args: Readonly<{ context: any; params: any; }>) => {
       const { context, params } = args;
-      console.log('params:', params);
-      console.log('args:', args);
       if(isProtected) {
         if(!(context.auth && context.auth.identity)) {
           const error: any = new Error("Unauthenticated");
