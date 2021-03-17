@@ -6,7 +6,7 @@ metadata:
   name: api-gateway
   namespace: util
 spec:
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
@@ -19,10 +19,10 @@ spec:
           resources:
             requests:
               memory: 1Gi
-              cpu: 250m
+              cpu: 450m
             limits:
               memory: 1.5Gi
-              cpu: 350m
+              cpu: 550m
           env:
             - name: QMIT_APP_ENV
               value: prod
