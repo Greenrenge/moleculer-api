@@ -5,7 +5,6 @@ import { APIGateway, Logger } from "../../";
 import { APIRequestContextSource, AuthContext, createAuthContextOIDCParser } from "../../server";
 
 const { oidc, isDebug, isDev } = config;
-
 export const gateway = new APIGateway({
   brokers: [
     {
@@ -13,6 +12,27 @@ export const gateway = new APIGateway({
         tracing: {
           // TODO: dig into what causes GC crash for stopping broker when tracing enabled...
           enabled: false,
+        },
+        requestTimeout: 7 * 1000, // in milliseconds,
+        retryPolicy: {
+          enabled: true,
+          retries: 7,
+          delay: 200,
+          maxDelay: 3000,
+          factor: 2,
+          check: (err) => {
+            return err && !!(err as any).retryable;
+          },
+        },
+        circuitBreaker: {
+          enabled: true,
+          threshold: 0.5,
+          windowTime: 60,
+          minRequestCount: 20,
+          halfOpenTime: 10 * 1000,
+          check: (err) => {
+            return err && (err as any).code && (err as any).code >= 500;
+          },
         },
       }),
     },
