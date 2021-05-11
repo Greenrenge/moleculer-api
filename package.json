@@ -55,7 +55,7 @@
     "kleur": "^3.0.3",
     "lodash": "^4.17.15",
     "lru-cache": "^5.1.1",
-    "moleculer": "^0.14.7",
+    "moleculer": "^0.14.13",
     "moment": "^2.26.0",
     "morgan": "^1.10.0",
     "node-fetch": "^2.6.0",
@@ -106,11 +106,11 @@
     "jest-mock-req-res": "^1.0.2",
     "memorystream": "^0.3.1",
     "nodemon": "^2.0.4",
-    "qmit-sdk": "^1.0.24",
+    "qmit-sdk": "^1.0.28",
     "ts-jest": "^25.10.0-alpha.2",
-    "ts-node": "^8.10.1",
-    "tslint": "^6.1.2",
-    "typescript": "^3.9.5"
+    "ts-node": "^9.1.1",
+    "tslint": "^6.1.3",
+    "typescript": "^4.2.4"
   },
   "engines": {
     "node": ">= 10.x.x"

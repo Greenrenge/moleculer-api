@@ -28,7 +28,7 @@ export abstract class ServerApplicationComponent<ApplicationRoute extends Route>
 
   public abstract mountRoutes(routes: ReadonlyArray<Readonly<ApplicationRoute>>, pathPrefixes: string[], createContext: APIRequestContextConstructor): Readonly<RouteHandlerMap<ApplicationRoute>>;
 
-  public abstract async start(): Promise<void>;
+  public abstract start(): Promise<void>;
 
-  public abstract async stop(): Promise<void>;
+  public abstract stop(): Promise<void>;
 }

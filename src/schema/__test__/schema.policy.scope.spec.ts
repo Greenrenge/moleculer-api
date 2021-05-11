@@ -142,7 +142,7 @@ describe("schema policy should work", () => {
     const req = mockRequest();
     const res = mockResponse();
     await expect(
-      new Promise(async (resolve, reject) => {
+      new Promise<void>(async (resolve, reject) => {
         try {
           await echoFooEndpoint.handler(ctx, req, res);
           resolve();
@@ -169,7 +169,7 @@ describe("schema policy should work", () => {
     req2.query.hello = "world!";
     const res2 = mockResponse();
     await expect(
-      new Promise(async (resolve, reject) => {
+      new Promise<void>(async (resolve, reject) => {
         try {
           await echoFooEndpoint.handler(ctx2, req2, res2);
           resolve();
@@ -195,7 +195,7 @@ describe("schema policy should work", () => {
     const req = mockRequest();
     const res = mockResponse();
     await expect(
-      new Promise(async (resolve, reject) => {
+      new Promise<void>(async (resolve, reject) => {
         try {
           await echoFooEndpoint.handler(ctx, req, res);
           resolve();
@@ -223,7 +223,7 @@ describe("schema policy should work", () => {
     const req2 = mockRequest();
     const res2 = mockResponse();
     await expect(
-      new Promise(async (resolve, reject) => {
+      new Promise<void>(async (resolve, reject) => {
         try {
           await echoFooEndpoint.handler(ctx2, req2, res2);
           resolve();
@@ -250,7 +250,7 @@ describe("schema policy should work", () => {
     const req = mockRequest();
     const res = mockResponse();
     await expect(
-      new Promise(async (resolve, reject) => {
+      new Promise<void>(async (resolve, reject) => {
         try {
           await echoFooBarEndpoint.handler(ctx, req, res);
           resolve();

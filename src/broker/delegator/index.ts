@@ -7,7 +7,7 @@ type ServiceBrokerDelegatorClass = typeof ServiceBrokerDelegator;
 interface ServiceBrokerDelegatorInterface extends ServiceBrokerDelegatorClass {
 }
 
-export const ServiceBrokerDelegatorConstructors: { [delegator: string]: ServiceBrokerDelegatorInterface } = {
+export const ServiceBrokerDelegatorConstructors: any = {
   [MoleculerServiceBrokerDelegator.key]: MoleculerServiceBrokerDelegator as ServiceBrokerDelegatorInterface,
   // [OtherServiceBrokerDelegator.key]: OtherServiceBrokerDelegator as ServiceBrokerDelegatorInterface,
 };

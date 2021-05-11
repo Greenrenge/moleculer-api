@@ -7,6 +7,7 @@ metadata:
   namespace: util
 spec:
   replicas: 1
+  minReadySeconds: 30
   template:
     metadata:
       labels:
@@ -18,11 +19,11 @@ spec:
           name: server
           resources:
             requests:
-              memory: 1Gi
-              cpu: 450m
+              memory: 1.2Gi
+              cpu: 550m
             limits:
               memory: 1.5Gi
-              cpu: 550m
+              cpu: 650m
           env:
             - name: QMIT_APP_ENV
               value: prod

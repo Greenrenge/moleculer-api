@@ -34,7 +34,7 @@ export const gateway = new APIGateway({
             return err && (err as any).code && (err as any).code >= 500;
           },
         },
-      }),
+      }) as any,
     },
   ],
   schema: {

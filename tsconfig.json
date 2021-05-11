@@ -20,8 +20,10 @@
     "outDir": "./dist",
     "lib": [
       "es6",
-      "esnext.asynciterable"
-    ]
+      "esnext.asynciterable",
+      "es2015.promise",
+      "dom"
+    ],
   },
   "include": [
     "src"

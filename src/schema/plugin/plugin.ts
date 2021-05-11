@@ -11,9 +11,9 @@ export abstract class Plugin<PluginSchema, PluginCatalog> extends Pluggable {
   }
 
   /* Plugin lifecycle */
-  public abstract async start(): Promise<void>;
+  public abstract start(): Promise<void>;
 
-  public abstract async stop(): Promise<void>;
+  public abstract stop(): Promise<void>;
 
   /* Schema validation */
   public abstract validateSchema(schema: PluginSchema): ValidationError[];
