@@ -244,7 +244,7 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
         }
 
         // read stream as buffer string with given encoding
-        await new Promise<string>((resolve, reject) => {
+        await new Promise<string | void>((resolve, reject) => {
           const chunks: any[] = [];
           stream
             .on("data", chunk => chunks.push(chunk))
