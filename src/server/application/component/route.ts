@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import PathToRegExp, { pathToRegexp } from "path-to-regexp";
 import { removeANSIColor } from "../../../interface";
 import { Branch, Version } from "../../../schema";
@@ -93,10 +92,10 @@ export abstract class Route {
   }
 
   public toString(): string {
-    return kleur.cyan(`${this.path} (${this.protocol})${this.props.description ? ": " + kleur.dim(this.props.description) : ""}`);
+    return `${this.path} (${this.protocol})${this.props.description ? ": " + this.props.description : ""}`;
   }
 
   public toStringWithoutDescription(): string {
-    return kleur.cyan(`${this.path} (${this.protocol})`);
+    return `${this.path} (${this.protocol})`;
   }
 }

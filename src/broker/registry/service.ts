@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import { ServiceBroker } from "../broker";
 import { ServiceActionProps } from "./action";
 import { ServiceEventProps } from "./event";
@@ -77,11 +76,11 @@ export class Service {
   }
 
   public toString(): string {
-    return `${kleur.blue(`${this.props.id}:${this.shortHash}`)}${kleur.cyan("@")}${kleur.green(this.empty ? "empty-node-pool" : Array.from(this.nodeIdMap.keys()).join(","))}`;
+    return `${`${this.props.id}:${this.shortHash}`}${"@"}${this.empty ? "empty-node-pool" : Array.from(this.nodeIdMap.keys()).join(",")}`;
   }
 
   public toStringWithoutNodeIds(): string {
-    return `${kleur.blue(`${this.props.id}:${this.shortHash}`)}`;
+    return `${`${this.props.id}:${this.shortHash}`}`;
   }
 
   public get empty() {

@@ -1,5 +1,3 @@
-import * as kleur from "kleur";
-
 export type ServiceNodeProps = {
   id: string; // should be unique
   displayName: string;
@@ -23,7 +21,7 @@ export class ServiceNode {
   }
 
   public toString(): string {
-    return kleur.green(this.props.id);
+    return this.props.id;
   }
 
   public getInformation() {
