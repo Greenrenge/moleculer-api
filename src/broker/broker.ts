@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import * as _ from "lodash";
 import { RecursivePartial } from "../interface";
 import { Logger } from "../logger";
@@ -101,7 +100,7 @@ export class ServiceBroker<DelegatorContext = any> {
     await this.discoveryPubSub.subscribeAll(listeners);
     await this.registry.start();
     await this.delegator.start();
-    this.props.logger.info(`service broker has been started: ${kleur.yellow(this.delegator.key)}`);
+    this.props.logger.info(`service broker has been started: ${this.delegator.key}`);
   }
 
   public async stop(): Promise<void> {
@@ -126,7 +125,7 @@ export class ServiceBroker<DelegatorContext = any> {
     this.registry.addEventExample([packet.event], packet);
 
     // log
-    this.props.logger[this.opts.log!.event! ? "info" : "debug"](`received ${kleur.green(packet.event)} ${packet.broadcast ? "broadcast " : ""}event from ${kleur.yellow(packet.from || "unknown")}`);
+    this.props.logger[this.opts.log!.event! ? "info" : "debug"](`received ${packet.event} ${packet.broadcast ? "broadcast " : ""}event from ${packet.from || "unknown"}`);
   }
 
   protected async emitServiceConnected(service: Service): Promise<void> {
@@ -233,7 +232,7 @@ export class ServiceBroker<DelegatorContext = any> {
           }
 
           // log in advance
-          this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${kleur.cyan("@")}${node} ${kleur.cyan(batchingParamsList.length)} times in a batch from ${kleur.yellow((context.id || "unknown") + "@" + (context.ip || "unknown"))}`);
+          this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${"@"}${node} ${batchingParamsList.length} times in a batch from ${(context.id || "unknown") + "@" + (context.ip || "unknown")}`);
 
           // do batching call
           const response = await this.delegator.call(ctx, {action, node, params: mergedParams, disableCache, batchedParamsLength: batchingParamsList.length });
@@ -247,7 +246,7 @@ export class ServiceBroker<DelegatorContext = any> {
 
     } else {
       // log in advance
-      this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${kleur.cyan("@")}${node} from ${kleur.yellow((context.id || "unknown") + "@" + (context.ip || "unknown"))}`);
+      this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${"@"}${node} from ${(context.id || "unknown" + "@" + (context.ip || "unknown"))}`);
 
       // normal request
       const response = await this.delegator.call(ctx, {action, node, params, disableCache});
@@ -308,7 +307,7 @@ export class ServiceBroker<DelegatorContext = any> {
     this.registry.addEventExample([args.event], packet);
 
     // log
-    this.props.logger[this.opts.log!.event! ? "info" : "debug"](`published ${kleur.green(packet.event)} ${packet.broadcast ? "broadcast " : ""}event from ${kleur.yellow(packet.from!)}`);
+    this.props.logger[this.opts.log!.event! ? "info" : "debug"](`published ${packet.event} ${packet.broadcast ? "broadcast " : ""}event from ${packet.from!}`);
   }
 
   /* params mapper */

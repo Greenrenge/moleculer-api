@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import { hashObject } from "../../interface";
 import { EventPacket } from "../pubsub";
 import { Service } from "./index";
@@ -62,6 +61,6 @@ export class ServiceEvent {
   }
 
   public toString(): string {
-    return kleur.green(this.props.id);
+    return this.props.id;
   }
 }

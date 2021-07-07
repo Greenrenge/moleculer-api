@@ -1,5 +1,4 @@
 import * as _ from "lodash";
-import * as kleur from "kleur";
 import * as Winston from "winston";
 import { transports, format } from "winston";
 import util from "util";
@@ -19,7 +18,7 @@ export class WinstonLogger extends Logger {
           format.prettyPrint(),
           format.colorize(),
           format.printf(({level, message, timestamp, label}) => {
-            return `${timestamp} ${level} ${kleur.yellow(label)}: ${message}`;
+            return `${timestamp} ${level} ${label}: ${message}`;
           }),
         ),
       }),

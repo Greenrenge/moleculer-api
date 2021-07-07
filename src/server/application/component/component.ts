@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import { HasStaticKey } from "../../../interface";
 import { Logger } from "../../../logger";
 import { APIRequestContextConstructor } from "../context";
@@ -17,7 +16,7 @@ export abstract class ServerApplicationComponent<ApplicationRoute extends Route>
   public abstract readonly module: any; // dependant module which is injected to middleware
 
   public toString(): string {
-    return kleur.yellow(`${this.key}<${this.Route.name}>`);
+    return `${this.key}<${this.Route.name}>`;
   }
 
   public canHandleRoute(route: Readonly<Route>): boolean {

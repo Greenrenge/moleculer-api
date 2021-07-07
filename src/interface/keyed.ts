@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 
 export abstract class HasStaticKey {
   public static readonly key: string;
@@ -13,6 +12,6 @@ export abstract class HasStaticKey {
   }
 
   public toString(): string {
-    return kleur.yellow(this.key);
+    return this.key;
   }
 }

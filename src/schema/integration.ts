@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import { Reporter, Service, ServiceAction } from "../broker";
 import { ValidationError } from "../interface";
 import { Branch } from "./branch";
@@ -36,7 +35,7 @@ export class ServiceAPIIntegration {
   }
 
   public toString(): string {
-    return `(${this.type === ServiceAPIIntegration.Type.Add ? "+" : "-"}) ${this.service} ${kleur[ServiceAPIIntegration.StatusColor[this.status] as keyof kleur.Kleur](this.status)}`;
+    return `(${this.type === ServiceAPIIntegration.Type.Add ? "+" : "-"}) ${this.service} ${this.status}`;
   }
 
   public get information() {
@@ -97,14 +96,14 @@ export class ServiceAPIIntegration {
       message: "gateway has been updated successfully",
       branch: branch.toString(),
       version: {
-        from: version.parentVersion && kleur.dim(version.parentVersion.toString()),
+        from: version.parentVersion && version.parentVersion.toString(),
         to: version.toString(),
       },
       integrations: version.integrations
         .filter(int => int.status === ServiceAPIIntegration.Status.Succeed && int.type === ServiceAPIIntegration.Type.Add)
         .map(int => {
           if (version.parentVersion && version.parentVersion.integrations.includes(int)) {
-            return kleur.dim(int.service.toString());
+            return int.service.toString();
           }
           return int.toString();
         }),

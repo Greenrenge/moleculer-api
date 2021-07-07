@@ -1,6 +1,5 @@
 import AsyncLock from "async-lock";
 import { EventEmitter } from "events";
-import * as kleur from "kleur";
 import * as _ from "lodash";
 import { Reporter, Service } from "../broker";
 import { FatalError, RecursivePartial, ValidationError } from "../interface";
@@ -57,7 +56,7 @@ export class Branch {
   }
 
   public toString(): string {
-    return `${kleur.bold(kleur.cyan(this.name))} ${kleur.cyan(`(${this.serviceCatalog.size} services)`)}`;
+    return `${this.name} ${`(${this.serviceCatalog.size} services)`}`;
   }
 
   public getInformation(includeServices = false) {
@@ -380,7 +379,7 @@ export class Branch {
 
       const routeIntegrations: string[] = [];
       for (const r of removedRoutes) {
-        routeIntegrations.push(kleur.dim(`(-) ${r.toStringWithoutDescription()}`));
+        routeIntegrations.push(`(-) ${r.toStringWithoutDescription()}`);
       }
       for (const r of updatedRoutes) {
         routeIntegrations.push(`(+) ${r}`);
