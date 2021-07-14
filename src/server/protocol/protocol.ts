@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import { Pluggable } from "../../interface";
 import { Logger } from "../../logger";
 import { ServerApplicationComponentModules } from "../application";

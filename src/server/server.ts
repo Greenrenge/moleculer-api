@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import _ from "lodash";
 import { RecursivePartial } from "../interface";
 import { Logger } from "../logger";
@@ -129,9 +128,9 @@ export class APIServer {
     this.props.logger.info(`gateway server protocol has been started: ${this.protocols.join(", ")}`);
 
     if (listeningURIs.length > 0) {
-      this.props.logger.info(`gateway server has been started and listening on: ${kleur.blue(kleur.bold(listeningURIs.join(", ")))}`);
+      this.props.logger.info(`gateway server has been started and listening on: ${listeningURIs.join(", ")}`);
     } else {
-      this.props.logger.error(`gateway server has been started but there are ${kleur.red("no bound network interfaces")}`);
+      this.props.logger.error(`gateway server has been started but there are no bound network interfaces`);
     }
 
     // start schema registry and connect handler update methods

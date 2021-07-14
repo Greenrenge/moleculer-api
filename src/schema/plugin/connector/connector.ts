@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import { PolicyPlugin } from "..";
 import { EventPacket, ServiceAction } from "../../../broker";
 import { ParamsMapper } from "../../../broker/params";
@@ -32,7 +31,7 @@ export const ConnectorCompiler = {
       function: schema,
       mappableKeys: opts.mappableKeys,
       reporter: integration.reporter.getChild({
-        field: kleur.bold(kleur.cyan(field)),
+        field: field,
         schema,
       }),
     });
@@ -68,7 +67,7 @@ export const ConnectorCompiler = {
       function: schema.if,
       mappableKeys: opts.explicitMappableKeys,
       reporter: integration.reporter.getChild({
-        field: kleur.bold(kleur.cyan(field + ".if")),
+        field: field + ".if",
         schema: schema.if,
       }),
     }) : null;
@@ -78,7 +77,7 @@ export const ConnectorCompiler = {
       function: schema.map,
       mappableKeys: ["request", "response"],
       reporter: integration.reporter.getChild({
-        field: kleur.bold(kleur.cyan(field + ".map")),
+        field: field + ".map",
         schema: schema.map,
       }),
     }) : null;
@@ -108,7 +107,7 @@ export const ConnectorCompiler = {
           batchingEnabled: opts.batchingEnabled,
           paramsSchema: action.paramsSchema,
           reporter: integration.reporter.getChild({
-            field: kleur.bold(kleur.cyan(field + ".params")),
+            field: field + ".params",
             schema: schema.params,
           }),
         });
@@ -164,7 +163,7 @@ export const ConnectorCompiler = {
       batchingEnabled: false,
       paramsSchema: null,
       reporter: integration.reporter.getChild({
-        field: kleur.bold(kleur.cyan(field + ".params")),
+        field: field + ".params",
         schema: schema.params,
       }),
     });
@@ -174,7 +173,7 @@ export const ConnectorCompiler = {
       function: schema.filter,
       mappableKeys: ["context", "event", "broadcast", "params"],
       reporter: integration.reporter.getChild({
-        field: kleur.bold(kleur.cyan(field + ".filter")),
+        field: field + ".filter",
         schema: schema.filter,
       }),
       // returnTypeCheck: value => typeof value === "boolean",
@@ -186,7 +185,7 @@ export const ConnectorCompiler = {
       function: schema.map,
       mappableKeys: ["context", "event", "params", "groups", "broadcast"],
       reporter: integration.reporter.getChild({
-        field: kleur.bold(kleur.cyan(field + ".map")),
+        field: field + ".map",
         schema: schema.map,
       }),
     }) : null;
@@ -198,7 +197,7 @@ export const ConnectorCompiler = {
         function: schema.event,
         mappableKeys: opts.mappableKeys,
         reporter: integration.reporter.getChild({
-          field: kleur.bold(kleur.cyan(field + ".event")),
+          field: field + ".event",
           schema: schema.event,
         }),
         returnTypeCheck: value => typeof value === "string" && !!value,
@@ -290,7 +289,7 @@ export const ConnectorCompiler = {
       function: schema.filter,
       mappableKeys: ["context", "event", "broadcast", "params"],
       reporter: integration.reporter.getChild({
-        field: kleur.bold(kleur.cyan(field + ".filter")),
+        field: field + ".filter",
         schema: schema.filter,
       }),
       // returnTypeCheck: value => typeof value === "boolean",
@@ -302,7 +301,7 @@ export const ConnectorCompiler = {
       function: schema.map,
       mappableKeys: ["context", "event", "broadcast", "params"],
       reporter: integration.reporter.getChild({
-        field: kleur.bold(kleur.cyan(field + ".map")),
+        field: field + ".map",
         schema: schema.map,
       }),
     }) : null;
@@ -314,7 +313,7 @@ export const ConnectorCompiler = {
         function: schema.events,
         mappableKeys: opts.mappableKeys,
         reporter: integration.reporter.getChild({
-          field: kleur.bold(kleur.cyan(field + ".events")),
+          field: field + ".events",
           schema: schema.events,
         }),
         returnTypeCheck: value => Array.isArray(value) && value.every(name => typeof name === "string" && name),

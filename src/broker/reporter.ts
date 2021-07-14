@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import * as _ from "lodash";
 import * as os from "os";
 import { table, getBorderCharacters } from "table";
@@ -118,9 +117,9 @@ export class Reporter {
 
   /* Draw message stack as table */
   public peekTable(): string {
-    const title = `${kleur.white(`api`)}${kleur.dim(kleur.white(`@${this.gatewayNodeId}`))} -> ${this.props.service.toStringWithoutNodeIds()}`;
+    const title = `${`api`}${`@${this.gatewayNodeId}`} -> ${this.props.service.toStringWithoutNodeIds()}`;
 
-    return `\n${title}\n` + table([["type", "message"].map(c => kleur.white(c))].concat(Reporter.reportsToRows(this.stack)), {
+    return `\n${title}\n` + table([["type", "message"].map(c => c)].concat(Reporter.reportsToRows(this.stack)), {
       border: getBorderCharacters("norc"),
       columns: {
         0: {alignment: "left", wrapWord: false},
@@ -130,7 +129,7 @@ export class Reporter {
   }
 
   public static getTable(reports: ReadonlyArray<Readonly<Report>>): string {
-    return "\n" + table([["type", "message"].map(c => kleur.white(c))].concat(Reporter.reportsToRows(reports)), {
+    return "\n" + table([["type", "message"].map(c => c)].concat(Reporter.reportsToRows(reports)), {
       border: getBorderCharacters("norc"),
       columns: {
         0: {alignment: "left", wrapWord: false},
@@ -155,8 +154,8 @@ export class Reporter {
         content = peekObject(message);
       }
       return [
-        kleur[Reporter.tableTypeLabelColors[type]](kleur.bold(type)),
-        kleur.dim(at.toISOString()) + "\n" + content,
+        (type),
+        at.toISOString() + "\n" + content,
         // kleur.dim(at.toISOString()),
       ];
     });
@@ -210,5 +209,5 @@ function peekObject(value: any, path: string = "", padEnd: number = 10, depth = 
     }
   }
 
-  return path ? kleur.dim(`${path}: `.padEnd(padEnd)) + value : value;
+  return path ? `${path}: `.padEnd(padEnd) + value : value;
 }

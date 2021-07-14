@@ -1,6 +1,6 @@
 {
   "name": "moleculer-api",
-  "version": "0.3.7",
+  "version": "0.3.9",
   "description": "A dynamic API Gateway for MoleculerJS which updates REST endpoints and aggregated GraphQL schema, access control policy for each action calls from metadata of remote services schema without restart or deployment.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -52,7 +52,6 @@
     "graphql-iso-date": "^3.6.1",
     "graphql-type-json": "^0.3.1",
     "helmet": "^3.22.0",
-    "kleur": "^3.0.3",
     "lodash": "^4.17.15",
     "lru-cache": "^5.1.1",
     "moleculer": "^0.14.13",

@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import { Route, RouteHandler, RouteProps } from "../route";
 import express from "express-serve-static-core";
 export type HTTPRouteRequest = express.Request;
@@ -34,6 +33,6 @@ export class HTTPRoute extends Route {
   }
 
   public toString(): string {
-    return kleur.cyan(`${this.path} (${this.protocol}:${this.method})${this.props.description ? ": " + kleur.dim(this.props.description) : ""}`);
+    return `${this.path} (${this.protocol}:${this.method})${this.props.description ? ": " + this.props.description : ""}`;
   }
 }

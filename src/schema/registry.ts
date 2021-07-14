@@ -1,6 +1,5 @@
 import { EventEmitter } from "events";
 import AsyncLock from "async-lock";
-import * as kleur from "kleur";
 import _ from "lodash";
 import { FatalError, RecursivePartial, hashObject, validateObject, ValidationSchema, ValidationError, validateInlineFunction } from "../interface";
 import { Reporter, Service, ServiceBroker } from "../broker";
@@ -302,9 +301,9 @@ export class SchemaRegistry {
     // arrange validation errors
     return errors.map(({type, message, field, actual, expected, location, ...otherProps}) => {
       const err = {
-        type: kleur.bold(kleur.red(type)),
-        message: message ? kleur.yellow(message) : undefined,
-        field: kleur.bold(kleur.cyan(field)),
+        type: type,
+        message: message ? message : undefined,
+        field: field,
         expected,
         actual,
         location,

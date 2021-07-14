@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import { hashObject } from "../interface";
 import { Route } from "../server";
 import { ServiceAPIIntegration } from "./integration";
@@ -28,7 +27,7 @@ export class Version {
   }
 
   public toString(): string {
-    return kleur.yellow(`${this.shortHash} (${this.props.schemaHashMap.size} schemata, ${this.props.routeHashMap.size} routes)`);
+    return `${this.shortHash} (${this.props.schemaHashMap.size} schemata, ${this.props.routeHashMap.size} routes)`;
   }
 
   public get information() {

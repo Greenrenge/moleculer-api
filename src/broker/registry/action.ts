@@ -1,4 +1,3 @@
-import * as kleur from "kleur";
 import { normalizeValidationSchema, NormalizedValidationSchema, hashObject } from "../../interface";
 import { Service } from "./index";
 
@@ -36,7 +35,7 @@ export class ServiceAction {
   }
 
   public toString(): string {
-    return kleur.blue(this.props.id);
+    return this.props.id;
   }
 
   public get id() {
