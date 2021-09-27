@@ -1,6 +1,6 @@
 {
   "name": "moleculer-api",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "description": "A dynamic API Gateway for MoleculerJS which updates REST endpoints and aggregated GraphQL schema, access control policy for each action calls from metadata of remote services schema without restart or deployment.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -35,6 +35,8 @@
   ],
   "author": "QMIT Inc.",
   "dependencies": {
+    "@sentry/node": "^6.13.2",
+    "@sentry/tracing": "^6.13.2",
     "accept-language-parser": "^1.5.0",
     "apollo-server": "^2.14.1",
     "async-lock": "^1.2.4",

@@ -16,6 +16,9 @@ export const config = vault.fetch(async (get, list, { appEnv }) => {
         client_secret: string,
       };
     }),
+    sentry: ((await get(`${appEnv}/data/sentry`)).data as {
+      dsn: string;
+    }),
     // example: (await get("common/data/test")).data,
   };
 }, {
