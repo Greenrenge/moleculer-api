@@ -8,5 +8,6 @@ COPY package.json yarn.lock ./
 RUN NODE_ENV=development yarn
 COPY . .
 RUN yarn build
-
+RUN printenv > .env
+RUN printenv > dist/examples/qmit/.env
 CMD [ "node", "dist/examples/qmit/" ]
