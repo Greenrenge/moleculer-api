@@ -5,28 +5,28 @@ import { APIGateway, Logger } from "../../";
 import { ApolloError } from "apollo-server-core";
 import { APIRequestContextSource, AuthContext, createAuthContextOIDCParser } from "../../server";
 import { ApolloServerPlugin } from 'apollo-server-plugin-base';
-import * as Sentry from '@sentry/node';
-const Tracing = require("@sentry/tracing");
+// import * as Sentry from '@sentry/node';
+// const Tracing = require("@sentry/tracing");
 // import { RewriteFrames  } from "@sentry/integrations";
 
-const { oidc, isDebug, isDev, sentry, env } = config;
+const { oidc, isDebug, isDev, env } = config;
 
-Sentry.init({
-  environment: env === "dev" ? "stage" : "production",
-  // see why we use APP_NAME here: https://github.com/getsentry/sentry-cli/issues/482
-  release: `PLCO_API_GATEWAY`,
-  dsn: sentry.dsn,
-  integrations: [
-    // used for rewriting SourceMaps from js to ts
-    // check that sourcemaps are enabled in tsconfig.js
-    // read the docs https://docs.sentry.io/platforms/node/typescript/
-    // new RewriteFrames({
-    //   root: process.cwd(),
-    // }) as any,
-    // Output sended data by Sentry to console.log()
-    // new Debug({ stringify: true }),
-  ],
-});
+// Sentry.init({
+//   environment: env === "dev" ? "stage" : "production",
+//   // see why we use APP_NAME here: https://github.com/getsentry/sentry-cli/issues/482
+//   release: `PLCO_API_GATEWAY`,
+//   dsn: sentry.dsn,
+//   integrations: [
+//     // used for rewriting SourceMaps from js to ts
+//     // check that sourcemaps are enabled in tsconfig.js
+//     // read the docs https://docs.sentry.io/platforms/node/typescript/
+//     // new RewriteFrames({
+//     //   root: process.cwd(),
+//     // }) as any,
+//     // Output sended data by Sentry to console.log()
+//     // new Debug({ stringify: true }),
+//   ],
+// });
 
 export const gateway = new APIGateway({
   brokers: [
@@ -79,10 +79,10 @@ export const gateway = new APIGateway({
                 }
 
                 if(ctx.context.auth) {
-                  Sentry.setUser({
-                    id: ctx.context.auth.identity.sub,
-                    email: ctx.context.auth.identity.email,
-                  });
+                  // Sentry.setUser({
+                  //   id: ctx.context.auth.identity.sub,
+                  //   email: ctx.context.auth.identity.email,
+                  // });
                 }
                 for (const err of ctx.errors) {
                   // Only report internal server errors,
@@ -90,29 +90,29 @@ export const gateway = new APIGateway({
                   if (err instanceof ApolloError) {
                     continue;
                   } else {
-                    Sentry.captureException(err);
+                    // Sentry.captureException(err);
                   }
 
-                  Sentry.withScope(scope => {
-                    scope.setTag("kind", ctx.operation?.operation);
-                    scope.setExtra("operationName", ctx.operationName);
-                    scope.setExtra("query", ctx.request.query);
-                    scope.setExtra("variables", ctx.request.variables);
-                    if (err.path) {
-                      scope.addBreadcrumb({
-                        category: "query-path",
-                        message: err.path.join(" > "),
-                        level: Sentry.Severity.Debug
-                      });
-                    }
-                    const transactionId = ctx.request.http?.headers.get(
-                      "X-Transaction-ID"
-                    );
-                    if (transactionId) {
-                      scope.setTransactionName(transactionId);
-                    }
-                    Sentry.captureException(err);
-                  });
+                  // Sentry.withScope(scope => {
+                  //   scope.setTag("kind", ctx.operation?.operation);
+                  //   scope.setExtra("operationName", ctx.operationName);
+                  //   scope.setExtra("query", ctx.request.query);
+                  //   scope.setExtra("variables", ctx.request.variables);
+                  //   if (err.path) {
+                  //     scope.addBreadcrumb({
+                  //       category: "query-path",
+                  //       message: err.path.join(" > "),
+                  //       level: Sentry.Severity.Debug
+                  //     });
+                  //   }
+                  //   const transactionId = ctx.request.http?.headers.get(
+                  //     "X-Transaction-ID"
+                  //   );
+                  //   if (transactionId) {
+                  //     scope.setTransactionName(transactionId);
+                  //   }
+                  //   Sentry.captureException(err);
+                  // });
                 }
               }
             };

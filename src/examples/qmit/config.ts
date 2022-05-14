@@ -1,29 +1,24 @@
 import { context, vault } from "qmit-sdk";
-
+import 'dotenv/config';
 // create global configuration
 // can fetch vault secrets in local/kubernetes environment
 
 /* istanbul ignore next */
-export const config = vault.fetch(async (get, list, { appEnv }) => {
-  return {
-    env: appEnv,
-    isDev: appEnv === "dev",
-    isDebug: !!process.env.APP_DEBUG,
-    ...((await get(`${appEnv}/data/api-gateway`)).data as {
-      oidc: {
-        issuer: string,
-        client_id: string,
-        client_secret: string,
-      };
-    }),
-    sentry: ((await get(`${appEnv}/data/sentry`)).data as {
-      dsn: string;
-    }),
-    // example: (await get("common/data/test")).data,
-  };
-}, {
+export const config =  {
+  env: process.env.QMIT_APP_ENV,
+  isDev: process.env.QMIT_APP_ENV === "dev",
+  isDebug: !!process.env.APP_DEBUG,
+  oidc: {
+    issuer: process.env.issuer as string,
+    client_id: process.env.client_id as string,
+    client_secret: process.env.client_secret as string,
+  },
+  // sentry: ((await get(`${appEnv}/data/sentry`)).data as {
+  //   dsn: string;
+  // }),
+  // example: (await get("common/data/test")).data,
   sandbox: {
-    appEnv: context.appEnv,
+    appEnv: process.env.QMIT_APP_ENV,
     abc: 1234,
   },
-});
+};
