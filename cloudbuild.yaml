@@ -36,23 +36,23 @@ steps:
           && docker push ${_IMAGE}:ci-${SHORT_SHA} \
           && echo "DONE: ${_IMAGE}:ci-${SHORT_SHA} pushed"
 
-  - id: '[*] do unit/integration test in dev cluster'
-    name: 'gcr.io/cloud-builders/kubectl'
-    entrypoint: 'bash'
-    env:
-      - 'CLOUDSDK_COMPUTE_ZONE=$_ZONE_DEV'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_DEV'
-    args:
-      - '-c'
-      - |
-        gcloud container clusters get-credentials --zone $$CLOUDSDK_COMPUTE_ZONE $$CLOUDSDK_CONTAINER_CLUSTER \
-        && /builder/kubectl.bash -n ${_NAMESPACE} run \
-          test-${BUILD_ID} \
-          --labels=test=true \
-          --generator=run-pod/v1 \
-          --image ${_IMAGE}:ci-${SHORT_SHA} \
-          --rm -i --restart=Never --attach --pod-running-timeout=5m \
-          -- npm run test-with-examples
+  # - id: '[*] do unit/integration test in dev cluster'
+  #   name: 'gcr.io/cloud-builders/kubectl'
+  #   entrypoint: 'bash'
+  #   env:
+  #     - 'CLOUDSDK_COMPUTE_ZONE=$_ZONE_DEV'
+  #     - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_DEV'
+  #   args:
+  #     - '-c'
+  #     - |
+  #       gcloud container clusters get-credentials --zone $$CLOUDSDK_COMPUTE_ZONE $$CLOUDSDK_CONTAINER_CLUSTER \
+  #       && /builder/kubectl.bash -n ${_NAMESPACE} run \
+  #         test-${BUILD_ID} \
+  #         --labels=test=true \
+  #         --generator=run-pod/v1 \
+  #         --image ${_IMAGE}:ci-${SHORT_SHA} \
+  #         --rm -i --restart=Never --attach --pod-running-timeout=5m \
+  #         -- npm run test-with-examples
 
   - id: '[develop] push the temporary image with :latest tag'
     name: 'gcr.io/cloud-builders/docker'
