@@ -140,8 +140,8 @@ export class ServiceRegistry {
 		}
 	}
 
-	private healthCheckIntervalTimer?: NodeJS.Timeout;
-	private consumeExamplesIntervalTimer?: NodeJS.Timeout;
+	private healthCheckIntervalTimer?: ReturnType<typeof setInterval>;
+	private consumeExamplesIntervalTimer?: ReturnType<typeof setInterval>;
 
 	public async start(): Promise<void> {
 		this.consumeExamplesIntervalTimer = setInterval(() => this.consumeExamplesQueues(), this.opts.examples.processIntervalSeconds * 1000);
