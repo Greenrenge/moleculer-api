@@ -137,8 +137,8 @@ export class GraphQLHandlers extends ApolloServer {
 					try {
 						req.body = await processFileUploads!(req, res, uploadsConfig);
 						req.body.variables = await this.waitForPromisedVariables(req.body.variables); // ref: https://github.com/jaydenseric/graphql-upload#upload-instance-property-promise
-					} catch (error) {
-						if (error.status && error.expose) {
+					} catch (error: Error | any) {
+						if (error?.status && error?.expose) {
 							res.status(error.status);
 						}
 
@@ -164,19 +164,19 @@ export class GraphQLHandlers extends ApolloServer {
 				}
 
 				res.send(graphqlResponse);
-			} catch (error) {
-				if (error.name !== "HttpQueryError") {
+			} catch (error: any) {
+				if (error?.name !== "HttpQueryError") {
 					throw error;
 				}
 
-				if (error.headers) {
+				if (error?.headers) {
 					for (const [name, value] of Object.entries(error.headers)) {
 						res.setHeader(name, value as string);
 					}
 				}
 
-				res.statusCode = error.statusCode;
-				res.send(error.message);
+				res.statusCode = error?.statusCode || 500;
+				res.send(error?.message);
 			}
 		};
 		this.handler = handler.bind(this);
