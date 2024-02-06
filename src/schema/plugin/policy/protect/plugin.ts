@@ -18,57 +18,59 @@ export class ProtectPolicyPlugin extends PolicyPlugin<ProtectPolicyPluginSchema,
   };
   private opts: ProtectPolicyPluginOptions;
 
-  constructor(protected readonly props: PolicyPluginProps, opts?: RecursivePartial<ProtectPolicyPluginOptions>) {
+  constructor(
+    protected readonly props: PolicyPluginProps,
+    opts?: RecursivePartial<ProtectPolicyPluginOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, ProtectPolicyPlugin.autoLoadOptions);
   }
 
   public validateSchema(schema: Readonly<ProtectPolicyPluginSchema>): ValidationError[] {
-    return validateValue(schema, {
-      type: 'boolean',
-      default: false,
-      optional: true,
-    }, {
-      field: "",
-    });
+    return validateValue(
+      schema,
+      {
+        type: "boolean",
+        default: false,
+        optional: true,
+      },
+      {
+        field: "",
+      },
+    );
   }
 
-  public async start(): Promise<void> {
-  }
+  public async start(): Promise<void> {}
 
-  public async stop(): Promise<void> {
-  }
+  public async stop(): Promise<void> {}
 
   public describeSchema(schema: Readonly<ProtectPolicyPluginSchema>): ProtectPolicyPluginCatalog {
     return {} as ProtectPolicyPluginCatalog;
   }
 
-  public compileCallPolicySchemata(schemata: Readonly<ProtectPolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): CallPolicyTester {
+  public compileCallPolicySchemata(schemata: Readonly<ProtectPolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): CallPolicyTester {
     return this.compilePolicySchemata(schemata, descriptions, integration) as CallPolicyTester;
   }
 
-  public compilePublishPolicySchemata(schemata: Readonly<ProtectPolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): PublishPolicyTester {
+  public compilePublishPolicySchemata(schemata: Readonly<ProtectPolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): PublishPolicyTester {
     return this.compilePolicySchemata(schemata, descriptions, integration) as PublishPolicyTester;
   }
 
-  public compileSubscribePolicySchemata(schemata: Readonly<ProtectPolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): SubscribePolicyTester {
+  public compileSubscribePolicySchemata(schemata: Readonly<ProtectPolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): SubscribePolicyTester {
     return this.compilePolicySchemata(schemata, descriptions, integration) as SubscribePolicyTester;
   }
 
-  private compilePolicySchemata(
-    schemata: Readonly<ProtectPolicyPluginSchema>, descriptions: ReadonlyArray<string|null>,
-    integration: Readonly<ServiceAPIIntegration>
-  ): CallPolicyTester | PublishPolicyTester | SubscribePolicyTester {
+  private compilePolicySchemata(schemata: Readonly<ProtectPolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): CallPolicyTester | PublishPolicyTester | SubscribePolicyTester {
     const isProtected = schemata;
 
-    return (args: Readonly<{ context: any; params: any; }>) => {
+    return (args: Readonly<{ context: any; params: any }>) => {
       const { context, params } = args;
-      if(isProtected) {
-        if(!(context.auth && context.auth.identity)) {
+      if (isProtected) {
+        if (!(context.auth && context.auth.identity)) {
           const error: any = new Error("Unauthenticated");
           error.statusCode = 401;
           error.code = 401;
-          error.description = 'requires signin'
+          error.description = "requires signin";
           throw error;
         }
       }

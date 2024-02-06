@@ -7,7 +7,7 @@ import { Logger } from "../../../../logger";
 import { APIRequestContextFactory, APIRequestContextSource, APIRequestContextFactoryProps } from "./factory";
 
 export type AuthRawToken = string;
-export type AuthContext = { scope: string[], identity: any | void, client: string | void, token: Token | void };
+export type AuthContext = { scope: string[]; identity: any | void; client: string | void; token: Token | void };
 export type AuthContextParser = (token: Token | void, logger: Logger) => Promise<Partial<AuthContext & { maxAge: number }> | void>;
 export type AuthContextImpersonator = (source: APIRequestContextSource, auth: AuthContext, logger: Logger) => Promise<Partial<AuthContext & { maxAge: number }> | void>;
 export type AuthContextFactoryOptions = {
@@ -40,7 +40,10 @@ export class AuthContextFactory extends APIRequestContextFactory<AuthContext> {
   private readonly opts: AuthContextFactoryOptions;
   private readonly cache: LRUCache<AuthRawToken, AuthContext>;
 
-  constructor(protected readonly props: APIRequestContextFactoryProps, opts?: RecursivePartial<AuthContextFactoryOptions>) {
+  constructor(
+    protected readonly props: APIRequestContextFactoryProps,
+    opts?: RecursivePartial<AuthContextFactoryOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, AuthContextFactory.autoLoadOptions);
     this.cache = new LRUCache(this.opts.cache);
@@ -76,15 +79,12 @@ export class AuthContextFactory extends APIRequestContextFactory<AuthContext> {
       }
 
       const parsedContext = await this.opts.parser(token!, this.props.logger);
-      context = _.defaultsDeep(
-        parsedContext || {},
-        {
-          scope: [],
-          identity: null,
-          client: null,
-          token,
-        },
-      );
+      context = _.defaultsDeep(parsedContext || {}, {
+        scope: [],
+        identity: null,
+        client: null,
+        token,
+      });
 
       // store cache for parsed token
       if (parsedContext) {
@@ -98,10 +98,7 @@ export class AuthContextFactory extends APIRequestContextFactory<AuthContext> {
     if (this.opts.impersonator) {
       const impersonatedContext = await this.opts.impersonator(source, context!, this.props.logger);
       if (impersonatedContext) {
-        context = _.defaultsDeep(
-          context!,
-          impersonatedContext,
-        );
+        context = _.defaultsDeep(context!, impersonatedContext);
       }
     }
 

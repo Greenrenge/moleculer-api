@@ -11,13 +11,14 @@ export type Upload = {
 
 // ref: https://github.com/jaydenseric/graphql-upload/blob/master/src/processRequest.mjs
 export class MultipartFormDataHandler {
-  constructor(protected readonly props: {
-    maxFiles: number;
-    maxFileSize: number;
-  }) {
-  }
+  constructor(
+    protected readonly props: {
+      maxFiles: number;
+      maxFileSize: number;
+    },
+  ) {}
 
-  public async collect(req: HTTPRouteRequest, res: HTTPRouteResponse): Promise<{[fieldName: string]: Upload} | null> {
+  public async collect(req: HTTPRouteRequest, res: HTTPRouteResponse): Promise<{ [fieldName: string]: Upload } | null> {
     if (req.method !== "POST") {
       return {};
     }
@@ -102,7 +103,7 @@ export class MultipartFormDataHandler {
           stream.resume();
         });
 
-        stream.on("error", error => {
+        stream.on("error", (error) => {
           stream.unpipe();
           capacitor.destroy(error);
         });
@@ -153,7 +154,7 @@ export class MultipartFormDataHandler {
       res.once("close", release);
 
       const abort = () => {
-        exit(new Error("request disconnected during file upload stream parsing."));  // TODO: normalize error
+        exit(new Error("request disconnected during file upload stream parsing.")); // TODO: normalize error
       };
 
       req.once("close", abort);
@@ -165,8 +166,7 @@ export class MultipartFormDataHandler {
   }
 
   private wasteStream(stream: NodeJS.ReadableStream) {
-    stream.on("error", () => {
-    });
+    stream.on("error", () => {});
     stream.resume();
   }
 }

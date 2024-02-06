@@ -3,18 +3,22 @@ import { NormalizedValidationSchema, RuleOneOf } from "../interface";
 import { Reporter } from "./reporter";
 
 export type ParamsMappingInfo = {
-  [paramName: string]: ({
-    strategy: "explicit";
-    typecasting: "boolean" | "number" | "string" | null; // actually string is not required but for clearness
-    batching: boolean;
-    path: string;
-  } | {
-    strategy: "explicit";
-    value: any;
-  } | {
-    strategy: "implicit";
-    candidatePaths: string[];
-  }) & {
+  [paramName: string]: (
+    | {
+        strategy: "explicit";
+        typecasting: "boolean" | "number" | "string" | null; // actually string is not required but for clearness
+        batching: boolean;
+        path: string;
+      }
+    | {
+        strategy: "explicit";
+        value: any;
+      }
+    | {
+        strategy: "implicit";
+        candidatePaths: string[];
+      }
+  ) & {
     schema: NormalizedValidationSchema[string] | null;
   };
 };
@@ -36,13 +40,13 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
   private readonly batchingParamNames: string[] | null;
 
   constructor(protected readonly props: ParamsMapperProps) {
-    const {reporter, batchingEnabled, explicitMappableKeys, implicitMappableKeys, paramsSchema} = props;
+    const { reporter, batchingEnabled, explicitMappableKeys, implicitMappableKeys, paramsSchema } = props;
     let explicitMapping: { [key: string]: any };
     let rootObjectMapping = false;
     if (typeof props.explicitMapping === "string") {
       if (props.explicitMapping) {
         rootObjectMapping = true;
-        explicitMapping = {[ParamsMapper.rootObjectKey]: props.explicitMapping};
+        explicitMapping = { [ParamsMapper.rootObjectKey]: props.explicitMapping };
       } else {
         explicitMapping = {};
       }
@@ -50,8 +54,8 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
       explicitMapping = props.explicitMapping;
     }
 
-    const info: ParamsMappingInfo = this.info = {};
-    const batchingParamNames: string[] | null = this.batchingParamNames = batchingEnabled ? [] : null;
+    const info: ParamsMappingInfo = (this.info = {});
+    const batchingParamNames: string[] | null = (this.batchingParamNames = batchingEnabled ? [] : null);
 
     let mapper: (args: MappableArgs) => { [key: string]: any } = () => ({});
 
@@ -59,7 +63,6 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
     const directParams: any = {};
     const mappedParamNames: string[] = [];
     OUTER: for (const [paramName, paramMapping] of Object.entries(explicitMapping)) {
-
       // @body, @body.foo, @body@, @body..., @body.bar:boolean, @body.zzz:number, @body:number, blabla, @blabla, @body.id[]
       if (typeof paramMapping === "string" && paramMapping.startsWith(ParamsMapper.mappablePrefix)) {
         // => @body, @body.foo, @body@, @body..., @body.bar:boolean, @body.zzz:number, @body:number, @blabla, @body.id[]
@@ -67,7 +70,6 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
         let paramPath = paramMapping.substr(1);
         // => body, body.foo, body@, body..., body.bar:boolean, body.zzz:number, body:number, blabla, body.id[]
         for (const mappableKey of explicitMappableKeys) {
-
           if (paramPath.startsWith(mappableKey)) {
             // => body, body.foo, body@, body..., body.bar:boolean, body.zzz:number, body:number, body.id[]
 
@@ -82,12 +84,7 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
                 // check hint schema has Array type param schema
                 if (paramsSchema && paramsSchema[paramName]) {
                   const paramSchema = paramsSchema[paramName];
-                  if (!(
-                    paramSchema.type === "array" ||
-                    paramSchema.type === "oneOf"
-                    && (paramSchema as RuleOneOf).items
-                    && (paramSchema as RuleOneOf).items.some(rule => rule.type === "array")
-                  )) {
+                  if (!(paramSchema.type === "array" || (paramSchema.type === "oneOf" && (paramSchema as RuleOneOf).items && (paramSchema as RuleOneOf).items.some((rule) => rule.type === "array")))) {
                     const err: any = new Error("given params schema seems not to support batching");
                     err.paramName = paramName;
                     err.paramMapping = paramMapping;
@@ -99,8 +96,8 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
 
                 // remember the param name
                 batchingParamNames.push(paramName);
-
-              } else { // batching is disabled for this mapper
+              } else {
+                // batching is disabled for this mapper
                 const err: any = new Error("a params mapper of current protocol does not support batching");
                 err.paramName = paramName;
                 err.paramMapping = paramMapping;
@@ -130,7 +127,7 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
 
               // tslint:disable-next-line:no-shadowed-variable
               const prevMapper = mapper;
-              mapper = args => {
+              mapper = (args) => {
                 let paramValue: any = _.get(args, paramPath);
                 if (typeof paramValue === "undefined") {
                   if (!(paramsSchema && paramsSchema[paramName] && paramsSchema[paramName].optional)) {
@@ -179,7 +176,7 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
                 batching,
                 typecasting,
                 path: paramPath,
-                schema: paramsSchema && paramsSchema[paramName] || null,
+                schema: (paramsSchema && paramsSchema[paramName]) || null,
               };
               mappedParamNames.push(paramName);
               continue OUTER;
@@ -197,25 +194,24 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
       info[paramName] = {
         strategy: "explicit",
         value: paramMapping,
-        schema: paramsSchema && paramsSchema[paramName] || null,
+        schema: (paramsSchema && paramsSchema[paramName]) || null,
       };
       mappedParamNames.push(paramName);
     }
 
     const prevMapper = mapper;
-    mapper = args => ({...directParams, ...prevMapper(args)});
+    mapper = (args) => ({ ...directParams, ...prevMapper(args) });
 
     // apply implicit mapping for rest params with hinted schema
     if (paramsSchema && implicitMappableKeys && implicitMappableKeys.length > 0) {
-      const implicitMappableParamNames = Object.keys(paramsSchema as object)
-        .filter(paramName => !mappedParamNames.includes(paramName) && paramName !== "$$strict");
+      const implicitMappableParamNames = Object.keys(paramsSchema as object).filter((paramName) => !mappedParamNames.includes(paramName) && paramName !== "$$strict");
 
       if (implicitMappableParamNames.length > 0) {
         for (const paramName of implicitMappableParamNames) {
           info[paramName] = {
             strategy: "implicit",
-            candidatePaths: implicitMappableKeys.map(mappableKey => `${mappableKey}.${paramName}`),
-            schema: paramsSchema && paramsSchema[paramName] || null,
+            candidatePaths: implicitMappableKeys.map((mappableKey) => `${mappableKey}.${paramName}`),
+            schema: (paramsSchema && paramsSchema[paramName]) || null,
           };
         }
 
@@ -226,7 +222,7 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
 
         // tslint:disable-next-line:no-shadowed-variable
         const prevMapper = mapper;
-        mapper = args => {
+        mapper = (args) => {
           const params = prevMapper(args);
           OUTER: for (const paramName of implicitMappableParamNames) {
             for (const mappableKey of implicitMappableKeys) {
@@ -251,30 +247,32 @@ export class ParamsMapper<MappableArgs extends { [key: string]: any }> {
     if (rootObjectMapping) {
       // tslint:disable-next-line:no-shadowed-variable
       const prevMapper = mapper;
-      mapper = args => prevMapper(args)[ParamsMapper.rootObjectKey];
+      mapper = (args) => prevMapper(args)[ParamsMapper.rootObjectKey];
     }
 
     this.mapper = mapper;
   }
 
-  public map(args: MappableArgs): { params?: any, batchingParams?: any } {
+  public map(args: MappableArgs): { params?: any; batchingParams?: any } {
     // map args to params
     const params = this.mapper(args);
 
     // batching disabled
     if (!this.batchingParamNames) {
-      return {params, batchingParams: null};
+      return { params, batchingParams: null };
     }
 
     // separate batching params
-    const result = Object.keys(params)
-      .reduce((res, paramName) => {
+    const result = Object.keys(params).reduce(
+      (res, paramName) => {
         (this.batchingParamNames!.includes(paramName) ? res.batchingParams : res.params)[paramName] = params[paramName];
         return res;
-      }, {
+      },
+      {
         params: {} as any,
         batchingParams: {} as any,
-      });
+      },
+    );
     if (Object.keys(result.params).length === 0) {
       result.params = null;
     }

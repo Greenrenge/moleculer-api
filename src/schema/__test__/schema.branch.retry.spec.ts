@@ -11,13 +11,13 @@ const moleculer = {
 };
 
 const schema = getSchemaRegistry({
-  logger: {level: "error", label: "gateway", silent: true},
-  delegator: {moleculer: {...moleculer, nodeID: "gateway"}},
+  logger: { level: "error", label: "gateway", silent: true },
+  delegator: { moleculer: { ...moleculer, nodeID: "gateway" } },
 });
 
 const remote = getMoleculerServiceBroker({
-  logger: {level: "error", label: "remote"},
-  moleculer: {...moleculer, nodeID: "remote"},
+  logger: { level: "error", label: "remote" },
+  moleculer: { ...moleculer, nodeID: "remote" },
   services: [
     MoleculerServiceSchemaFactory.echo("master", "master-c", {
       protocol: {
@@ -27,8 +27,7 @@ const remote = getMoleculerServiceBroker({
               beta: Beta!
             }
           `,
-          resolvers: {
-          },
+          resolvers: {},
         },
       },
     }),
@@ -40,8 +39,7 @@ const remote = getMoleculerServiceBroker({
               alpha: Alpha!
             }
           `,
-          resolvers: {
-          },
+          resolvers: {},
         },
       },
     }),
@@ -53,8 +51,7 @@ const remote = getMoleculerServiceBroker({
               foo: String!
             }
           `,
-          resolvers: {
-          },
+          resolvers: {},
         },
       },
     }),
@@ -79,10 +76,8 @@ beforeAll(async () => {
 
 describe("Schema registry integration retry test", () => {
   it("branch should gathered all services regardless of integration result", () => {
-    const serviceIds = schema.getBranch("master")!.services.map(s => s.id);
-    expect(serviceIds).toEqual(expect.arrayContaining([
-      "master-a", "master-b", "master-c",
-    ]));
+    const serviceIds = schema.getBranch("master")!.services.map((s) => s.id);
+    expect(serviceIds).toEqual(expect.arrayContaining(["master-a", "master-b", "master-c"]));
     expect(serviceIds).toHaveLength(3);
   });
 
@@ -94,8 +89,5 @@ describe("Schema registry integration retry test", () => {
 });
 
 afterAll(async () => {
-  await Promise.all([
-    schema.stop(),
-    remote.stop(),
-  ]);
+  await Promise.all([schema.stop(), remote.stop()]);
 });

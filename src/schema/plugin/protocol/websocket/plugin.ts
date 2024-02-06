@@ -17,178 +17,200 @@ export class WebSocketProtocolPlugin extends ProtocolPlugin<WebSocketProtocolPlu
   public static readonly autoLoadOptions: WebSocketProtocolPluginOptions = {};
   private opts: WebSocketProtocolPluginOptions;
 
-  constructor(protected readonly props: ProtocolPluginProps, opts?: RecursivePartial<WebSocketProtocolPluginOptions>) {
+  constructor(
+    protected readonly props: ProtocolPluginProps,
+    opts?: RecursivePartial<WebSocketProtocolPluginOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, WebSocketProtocolPlugin.autoLoadOptions);
   }
 
-  public async start(): Promise<void> {
-  }
+  public async start(): Promise<void> {}
 
-  public async stop(): Promise<void> {
-  }
+  public async stop(): Promise<void> {}
 
   public validateSchema(schema: WebSocketProtocolPluginSchema): ValidationError[] {
     const routePaths: string[] = [];
-    return validateObject(schema, {
-      description: {
-        type: "string",
-        optional: true,
-      },
-      basePath: {
-        type: "custom",
-        check(value: any) {
-          if (WebSocketRoute.isNonRootStaticPath(value)) {
-            return true;
-          }
-          return [{
-            type: "basePathInvalid",
-            field: "basePath",
-            actual: value,
-            expected: WebSocketRoute.nonRootStaticPathRegExp,
-            message: `basePath should be a valid non-root static path: eg. "/chat" | "/chat/lobby"`,
-          }];
+    return validateObject(
+      schema,
+      {
+        description: {
+          type: "string",
+          optional: true,
         },
-      },
-      routes: {
-        type: "array",
-        empty: false,
-        items: {
+        basePath: {
           type: "custom",
           check(value: any) {
-            const idx = schema.routes.indexOf(value);
-            if (typeof value !== "object") {
-              return [{
-                field: `routes[${idx}]`,
-                type: "type",
-                message: "route definition should be an object",
+            if (WebSocketRoute.isNonRootStaticPath(value)) {
+              return true;
+            }
+            return [
+              {
+                type: "basePathInvalid",
+                field: "basePath",
                 actual: value,
-              }];
-            }
-
-            const {path, description, deprecated, ...restProps} = value;
-
-            // path: string;
-            if (!WebSocketRoute.isNonRootDynamicPath(path) && !WebSocketRoute.isRootStaticPath(path)) {
-              return [{
-                field: `routes[${idx}].path`,
-                type: "routePathInvalid",
-                actual: path,
-                expected: [WebSocketRoute.nonRootDynamicPath, WebSocketRoute.rootStaticPathRegExp],
-                message: `route path should be a valid path: eg. "/" | "/rooms" | "/rooms/:id"`,
-              }];
-            }
-
-            const errors = validateObject(restProps, {
-              description: {
-                type: "string",
-                optional: true,
+                expected: WebSocketRoute.nonRootStaticPathRegExp,
+                message: `basePath should be a valid non-root static path: eg. "/chat" | "/chat/lobby"`,
               },
-              deprecated: {
-                type: "boolean",
-                optional: true,
-              },
-            }, {
-              strict: true,
-              field: `routes[${idx}]`,
-            });
-
-            if (errors.length === 0) {
-              // check duplicate path
-              if (routePaths.includes(path)) {
-                return [{
-                  field: `routes[${idx}].path`,
-                  type: "routePathDuplicate",
-                  actual: path,
-                  expected: undefined,
-                  message: `a route path should be unique"`,
-                }];
+            ];
+          },
+        },
+        routes: {
+          type: "array",
+          empty: false,
+          items: {
+            type: "custom",
+            check(value: any) {
+              const idx = schema.routes.indexOf(value);
+              if (typeof value !== "object") {
+                return [
+                  {
+                    field: `routes[${idx}]`,
+                    type: "type",
+                    message: "route definition should be an object",
+                    actual: value,
+                  },
+                ];
               }
-              routePaths.push(path);
-            }
 
-            // validate streaming route / pub-sub route
-            let rule: ValidationRule | ValidationRule[];
-            if (typeof restProps.call !== "undefined") {
-              rule = {
-                type: "object",
-                strict: true,
-                props: {
-                  call: ConnectorValidator.call,
-                  // binary: {
-                  //   type: "boolean",
-                  //   optional: true,
-                  // },
-                },
-                messages: {
-                  objectStrict: "WebSocketStreamingRouteSchema cannot be with other connectors",
-                },
-              };
-            } else if (typeof restProps.subscribe !== "undefined" || typeof restProps.publish !== "undefined") {
-              rule = {
-                type: "object",
-                strict: true,
-                props: {
-                  subscribe: ConnectorValidator.subscribe,
-                  publish: ConnectorValidator.publish,
-                  ignoreError: {
+              const { path, description, deprecated, ...restProps } = value;
+
+              // path: string;
+              if (!WebSocketRoute.isNonRootDynamicPath(path) && !WebSocketRoute.isRootStaticPath(path)) {
+                return [
+                  {
+                    field: `routes[${idx}].path`,
+                    type: "routePathInvalid",
+                    actual: path,
+                    expected: [WebSocketRoute.nonRootDynamicPath, WebSocketRoute.rootStaticPathRegExp],
+                    message: `route path should be a valid path: eg. "/" | "/rooms" | "/rooms/:id"`,
+                  },
+                ];
+              }
+
+              const errors = validateObject(
+                restProps,
+                {
+                  description: {
+                    type: "string",
+                    optional: true,
+                  },
+                  deprecated: {
                     type: "boolean",
                     optional: true,
                   },
                 },
-                messages: {
-                  objectStrict: "WebSocketPubSubRouteSchema cannot be with other connectors",
+                {
+                  strict: true,
+                  field: `routes[${idx}]`,
                 },
-              };
-            } else {
-              errors.push({
-                type: "routeInvalid",
-                field: `routes[${idx}]`,
-                message: `WebSocket should have either publish/subscribe or call property`,
-                expected: "WebSocketPubSubRouteSchema | WebSocketStreamingRouteSchema",
-              });
-            }
+              );
 
-            errors.push(...validateValue(restProps,
-              // @ts-ignore
-              rule, {
-                strict: true,
-                field: `routes[${idx}]`,
-              }));
+              if (errors.length === 0) {
+                // check duplicate path
+                if (routePaths.includes(path)) {
+                  return [
+                    {
+                      field: `routes[${idx}].path`,
+                      type: "routePathDuplicate",
+                      actual: path,
+                      expected: undefined,
+                      message: `a route path should be unique"`,
+                    },
+                  ];
+                }
+                routePaths.push(path);
+              }
 
-            return errors;
+              // validate streaming route / pub-sub route
+              let rule: ValidationRule | ValidationRule[];
+              if (typeof restProps.call !== "undefined") {
+                rule = {
+                  type: "object",
+                  strict: true,
+                  props: {
+                    call: ConnectorValidator.call,
+                    // binary: {
+                    //   type: "boolean",
+                    //   optional: true,
+                    // },
+                  },
+                  messages: {
+                    objectStrict: "WebSocketStreamingRouteSchema cannot be with other connectors",
+                  },
+                };
+              } else if (typeof restProps.subscribe !== "undefined" || typeof restProps.publish !== "undefined") {
+                rule = {
+                  type: "object",
+                  strict: true,
+                  props: {
+                    subscribe: ConnectorValidator.subscribe,
+                    publish: ConnectorValidator.publish,
+                    ignoreError: {
+                      type: "boolean",
+                      optional: true,
+                    },
+                  },
+                  messages: {
+                    objectStrict: "WebSocketPubSubRouteSchema cannot be with other connectors",
+                  },
+                };
+              } else {
+                errors.push({
+                  type: "routeInvalid",
+                  field: `routes[${idx}]`,
+                  message: `WebSocket should have either publish/subscribe or call property`,
+                  expected: "WebSocketPubSubRouteSchema | WebSocketStreamingRouteSchema",
+                });
+              }
+
+              errors.push(
+                ...validateValue(
+                  restProps,
+                  // @ts-ignore
+                  rule,
+                  {
+                    strict: true,
+                    field: `routes[${idx}]`,
+                  },
+                ),
+              );
+
+              return errors;
+            },
           },
         },
       },
-    }, {
-      strict: true,
-    });
+      {
+        strict: true,
+      },
+    );
   }
 
-  public compileSchemata(routeHashMapCache: Readonly<Map<string, Readonly<Route>>>, integrations: Readonly<ServiceAPIIntegration>[], branch: Branch): { hash: string; route: Readonly<Route>; }[] {
-    const items = new Array<{ hash: string, route: Readonly<WebSocketRoute> }>();
+  public compileSchemata(routeHashMapCache: Readonly<Map<string, Readonly<Route>>>, integrations: Readonly<ServiceAPIIntegration>[], branch: Branch): { hash: string; route: Readonly<Route> }[] {
+    const items = new Array<{ hash: string; route: Readonly<WebSocketRoute> }>();
 
     for (const integration of integrations) {
       const schema: WebSocketProtocolPluginSchema = (integration.schema.protocol as any)[this.key];
       for (const routeSchema of schema.routes) {
-
         // the source object below hash contains properties which can make this route unique
         const routeHash = hashObject([schema.basePath, routeSchema, integration.service.hash], true);
 
         // cache hit
         const cachedRoute = routeHashMapCache.get(routeHash);
         if (cachedRoute) {
-          items.push({hash: routeHash, route: cachedRoute});
+          items.push({ hash: routeHash, route: cachedRoute });
           continue;
         }
 
         // compile new route
         const path = WebSocketRoute.mergePaths(schema.basePath, routeSchema.path);
-        const route: Readonly<Route> = typeof (routeSchema as WebSocketStreamingRouteSchema).call !== "undefined"
-          ? this.createRouteFromWebSocketStreamingRouteScheme(path, routeSchema as WebSocketStreamingRouteSchema, integration)
-          : this.createRouteFromWebSocketPubSubRouteScheme(path, routeSchema as WebSocketPubSubRouteSchema, integration);
+        const route: Readonly<Route> =
+          typeof (routeSchema as WebSocketStreamingRouteSchema).call !== "undefined"
+            ? this.createRouteFromWebSocketStreamingRouteScheme(path, routeSchema as WebSocketStreamingRouteSchema, integration)
+            : this.createRouteFromWebSocketPubSubRouteScheme(path, routeSchema as WebSocketPubSubRouteSchema, integration);
 
-        items.push({hash: routeHash, route});
+        items.push({ hash: routeHash, route });
       }
     }
 
@@ -208,19 +230,18 @@ export class WebSocketProtocolPlugin extends ProtocolPlugin<WebSocketProtocolPlu
     const ignoreError = schema.ignoreError;
 
     const handler: WebSocketRouteHandler = async (context, socket, req) => {
-      const {params, query} = req;
+      const { params, query } = req;
 
       // subscribe and proxy message to socket
-      const mappableSubscriptionArgs = {context, path: params, query};
+      const mappableSubscriptionArgs = { context, path: params, query };
       await subscribeConnector(context, mappableSubscriptionArgs, (message) => {
         if (typeof message !== "string") {
           try {
             message = JSON.stringify(message);
-          } catch {
-          }
+          } catch {}
         }
 
-        socket.send(message, error => {
+        socket.send(message, (error) => {
           if (error && ignoreError !== true) {
             socket.emit("error", error);
           }
@@ -236,11 +257,10 @@ export class WebSocketProtocolPlugin extends ProtocolPlugin<WebSocketProtocolPlu
           // parse text message
           try {
             message = JSON.parse(message);
-          } catch {
-          }
+          } catch {}
         }
 
-        const mappableArgs = {context, path: params, query, message};
+        const mappableArgs = { context, path: params, query, message };
         try {
           await publishConnector(context, mappableArgs);
         } catch (error) {
@@ -286,8 +306,8 @@ export class WebSocketProtocolPlugin extends ProtocolPlugin<WebSocketProtocolPlu
         }
 
         // call endpoint with client stream (client -> server)
-        const {params, query} = req;
-        const mappableArgs = {context, path: params, query};
+        const { params, query } = req;
+        const mappableArgs = { context, path: params, query };
         const result = await callConnector(context, mappableArgs, {
           // inject client websocket stream to broker delegator
           createReadStream: () => clientStream,
@@ -300,7 +320,7 @@ export class WebSocketProtocolPlugin extends ProtocolPlugin<WebSocketProtocolPlu
             throw new Error("invalid stream response"); // TODO: normalize error
           }
           // read server stream then write to socket
-          serverStream.on("data", data => socket.send(data));
+          serverStream.on("data", (data) => socket.send(data));
         }
 
         // other result props ignored

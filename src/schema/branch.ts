@@ -23,7 +23,7 @@ export type BranchOptions = {
   maxUnusedSeconds: number;
 };
 
-const {Add, Remove} = ServiceAPIIntegration.Type;
+const { Add, Remove } = ServiceAPIIntegration.Type;
 
 export class Branch {
   public static readonly Master = "master";
@@ -31,13 +31,16 @@ export class Branch {
     Updated: "updated",
     Removed: "removed",
   };
-  private static lock = new AsyncLock({maxPending: 1000, timeout: 30 * 1000});
+  private static lock = new AsyncLock({ maxPending: 1000, timeout: 30 * 1000 });
   private readonly opts: BranchOptions;
   private readonly serviceCatalog: ServiceCatalog;
   private $latestVersion: Readonly<Version>;
   private emitter = new EventEmitter().setMaxListeners(1);
 
-  constructor(protected readonly props: BranchProps, opts?: RecursivePartial<BranchOptions>) {
+  constructor(
+    protected readonly props: BranchProps,
+    opts?: RecursivePartial<BranchOptions>,
+  ) {
     // setup initial or forked branch
     this.serviceCatalog = props.serviceCatalog || new ServiceCatalog();
     this.$latestVersion = props.parentVersion || Version.initialVersion;
@@ -65,10 +68,10 @@ export class Branch {
       latestUsedAt: this.latestUsedAt,
       parentVersion: this.props.parentVersion ? this.props.parentVersion.shortHash : null,
       latestVersion: this.$latestVersion.shortHash,
-      versions: this.versions.map(v => v.information),
-      services: includeServices ? this.serviceCatalog.services.map(service => service.getInformation(true)) : null,
+      versions: this.versions.map((v) => v.information),
+      services: includeServices ? this.serviceCatalog.services.map((service) => service.getInformation(true)) : null,
     };
-  };
+  }
 
   public get name() {
     return this.props.name;
@@ -89,7 +92,8 @@ export class Branch {
     return Math.floor((new Date().getTime() - this.latestUsedAt.getTime()) / 1000);
   }
 
-  public touch(): void { // should touched from server
+  public touch(): void {
+    // should touched from server
     this.latestUsedAt = new Date();
   }
 
@@ -117,13 +121,16 @@ export class Branch {
     // wait until queue empty and all on-going integration be progressed
     return Branch.lock.acquire(props.name, () => {
       return Branch.lock.acquire(this.name, () => {
-        return new Branch({
-          ...this.props,
-          name: props.name,
-          logger: props.logger,
-          parentVersion: this.$latestVersion,
-          serviceCatalog: this.serviceCatalog.clone(),
-        }, this.opts);
+        return new Branch(
+          {
+            ...this.props,
+            name: props.name,
+            logger: props.logger,
+            parentVersion: this.$latestVersion,
+            serviceCatalog: this.serviceCatalog.clone(),
+          },
+          this.opts,
+        );
       });
     });
   }
@@ -149,7 +156,7 @@ export class Branch {
 
       // update service catalog
       const oldItem = this.serviceCatalog.get(service.id);
-      this.serviceCatalog.add({service, integration, priority});
+      this.serviceCatalog.add({ service, integration, priority });
       const newItem = this.serviceCatalog.get(service.id)!;
 
       // on preferred service changes
@@ -163,18 +170,22 @@ export class Branch {
         // integrate API if has
         const integrations: ServiceAPIIntegration[] = [];
         if (oldItem && oldItem.integration) {
-          integrations.push(new ServiceAPIIntegration({
-            type: Remove,
-            serviceCatalog: this.serviceCatalog,
-            source: oldItem.integration,
-          }));
+          integrations.push(
+            new ServiceAPIIntegration({
+              type: Remove,
+              serviceCatalog: this.serviceCatalog,
+              source: oldItem.integration,
+            }),
+          );
         }
         if (newItem.integration) {
-          integrations.push(new ServiceAPIIntegration({
-            type: Add,
-            serviceCatalog: this.serviceCatalog,
-            source: newItem.integration,
-          }));
+          integrations.push(
+            new ServiceAPIIntegration({
+              type: Add,
+              serviceCatalog: this.serviceCatalog,
+              source: newItem.integration,
+            }),
+          );
         }
         if (integrations.length > 0) {
           return this.consumeIntegrations(integrations);
@@ -206,18 +217,22 @@ export class Branch {
       // integrate API if has
       const integrations: ServiceAPIIntegration[] = [];
       if (oldItem.integration) {
-        integrations.push(new ServiceAPIIntegration({
-          type: Remove,
-          serviceCatalog: this.serviceCatalog,
-          source: oldItem.integration,
-        }));
+        integrations.push(
+          new ServiceAPIIntegration({
+            type: Remove,
+            serviceCatalog: this.serviceCatalog,
+            source: oldItem.integration,
+          }),
+        );
       }
       if (newItem && newItem.integration) {
-        integrations.push(new ServiceAPIIntegration({
-          type: Add,
-          serviceCatalog: this.serviceCatalog,
-          source: newItem.integration,
-        }));
+        integrations.push(
+          new ServiceAPIIntegration({
+            type: Add,
+            serviceCatalog: this.serviceCatalog,
+            source: newItem.integration,
+          }),
+        );
       }
       if (integrations.length > 0) {
         await this.consumeIntegrations(integrations);
@@ -231,9 +246,8 @@ export class Branch {
       const parentVersion = this.$latestVersion;
 
       // get queue jobs and filter add/remove pairs
-      const compensatedIntegrations = integrations.filter(integration => {
-        return integrations
-          .some(int => int.schemaHash === integration.schemaHash && (int.type === Add && integration.type === Remove || int.type === Remove && integration.type === Add));
+      const compensatedIntegrations = integrations.filter((integration) => {
+        return integrations.some((int) => int.schemaHash === integration.schemaHash && ((int.type === Add && integration.type === Remove) || (int.type === Remove && integration.type === Add)));
       });
       if (compensatedIntegrations.length > 0) {
         for (const integration of compensatedIntegrations) {
@@ -249,7 +263,7 @@ export class Branch {
       }
 
       // create new schemaHashMap and pick up required schemata to compile
-      const {schemaHashMap, routeHashMapCache} = parentVersion.getChildVersionProps();
+      const { schemaHashMap, routeHashMapCache } = parentVersion.getChildVersionProps();
       let shouldCompile = initialCompile;
       for (const integration of integrations) {
         if (integration.type === Add) {
@@ -293,9 +307,9 @@ export class Branch {
       const errors: ValidationError[] = [];
       for (const plugin of this.props.protocolPlugins) {
         try {
-          const pluginIntegrations = mergedIntegrations.filter(integration => integration.schema.protocol && (integration.schema.protocol as any)[plugin.key]);
+          const pluginIntegrations = mergedIntegrations.filter((integration) => integration.schema.protocol && (integration.schema.protocol as any)[plugin.key]);
           const pluginResult = plugin.compileSchemata(routeHashMapCache, pluginIntegrations, this);
-          for (const {hash, route} of pluginResult) {
+          for (const { hash, route } of pluginResult) {
             const routeHashIndex = routeHashes.indexOf(hash);
             if (routeHashIndex !== -1) {
               const existingRoute = routes[routeHashIndex]!;
@@ -307,7 +321,7 @@ export class Branch {
               continue;
             }
 
-            const conflictRoute = routes.find(r => r.isConflict(route));
+            const conflictRoute = routes.find((r) => r.isConflict(route));
             if (conflictRoute) {
               errors.push({
                 type: "routeConflict",
@@ -335,13 +349,14 @@ export class Branch {
           integration.setFailed(this, parentVersion, errors);
         }
 
-        if (initialCompile) { // throw errors when failed in initial compile
+        if (initialCompile) {
+          // throw errors when failed in initial compile
           const err: any = new FatalError("failed to compile empty schemata initially"); // TODO: normalize error
           err.detail = errors as any;
           throw err;
         } else {
           const at = new Date();
-          const errorsTable = Reporter.getTable(errors.map(message => ({type: "error", message, at})));
+          const errorsTable = Reporter.getTable(errors.map((message) => ({ type: "error", message, at })));
           this.props.logger.error(`${this} branch failed ${parentVersion} -> (new) version compile:\n${integrations.join("\n")}${errorsTable}`);
         }
 
@@ -374,8 +389,8 @@ export class Branch {
         }
       }
 
-      updatedRoutes.sort((a, b) => a.path > b.path && a.protocol > b.protocol ? 1 : 0);
-      removedRoutes.sort((a, b) => a.path > b.path && a.protocol > b.protocol ? 1 : 0);
+      updatedRoutes.sort((a, b) => (a.path > b.path && a.protocol > b.protocol ? 1 : 0));
+      removedRoutes.sort((a, b) => (a.path > b.path && a.protocol > b.protocol ? 1 : 0));
 
       const routeIntegrations: string[] = [];
       for (const r of removedRoutes) {
@@ -431,11 +446,7 @@ export class Branch {
   }
 
   /* lifecycle (updated/removed) */
-  public start(listener: {
-    started: () => void,
-    updated: () => void,
-    removed: () => void,
-  }): Promise<void> {
+  public start(listener: { started: () => void; updated: () => void; removed: () => void }): Promise<void> {
     return Branch.lock.acquire(this.name, () => {
       this.emitter.on(Branch.Event.Updated, listener.updated);
       this.emitter.on(Branch.Event.Removed, listener.removed);

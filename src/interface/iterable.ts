@@ -4,14 +4,14 @@ import { pipe as pipeAsyncIterable } from "axax/es5/pipe";
 import { merge as mergeAsyncIterables } from "axax/es5/merge";
 import { $$asyncIterator, $$iterator } from "iterall";
 
-if(Symbol.asyncIterator === undefined) ((Symbol as any).asyncIterator) = $$asyncIterator;
+if (Symbol.asyncIterator === undefined) (Symbol as any).asyncIterator = $$asyncIterator;
 
-if(Symbol.iterator === undefined) ((Symbol as any).iterator) = $$iterator;
+if (Symbol.iterator === undefined) (Symbol as any).iterator = $$iterator;
 
 export type AsyncIteratorComposeItem<T> = {
   iterator: AsyncIterator<T>;
-  filter?: ((value: T) => boolean);
-  map?: ((value: T) => any);
+  filter?: (value: T) => boolean;
+  map?: (value: T) => any;
 };
 
 export function composeAsyncIterators<T>(items: AsyncIteratorComposeItem<T>[]): AsyncIterator<any> {

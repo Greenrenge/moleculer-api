@@ -18,7 +18,7 @@ export type ServiceBrokerOptions = {
   log: {
     event: boolean;
     call: boolean;
-  },
+  };
 } & ServiceBrokerDelegatorConstructorOptions;
 
 export type ServiceBrokerProps = {
@@ -32,9 +32,9 @@ export type ServiceBrokerListeners = {
   nodePoolUpdated: (service: Readonly<Service>) => void;
 };
 
-export type CallArgs = { action: Readonly<ServiceAction>, params?: any, batchingParams?: any, disableCache: boolean };
+export type CallArgs = { action: Readonly<ServiceAction>; params?: any; batchingParams?: any; disableCache: boolean };
 export type EventPublishArgs = Omit<EventPacket, "from">;
-export type DelegatedCallArgs = Omit<CallArgs, "batchingParams"> & { node: Readonly<ServiceNode>, batchedParamsLength?: number };
+export type DelegatedCallArgs = Omit<CallArgs, "batchingParams"> & { node: Readonly<ServiceNode>; batchedParamsLength?: number };
 export type DelegatedEventPublishArgs = EventPublishArgs;
 
 export class ServiceBroker<DelegatorContext = any> {
@@ -45,7 +45,10 @@ export class ServiceBroker<DelegatorContext = any> {
   private readonly eventPubSub: EventPubSub;
   private readonly opts: RecursivePartial<ServiceBrokerOptions>;
 
-  constructor(protected readonly props: ServiceBrokerProps, opts?: RecursivePartial<ServiceBrokerOptions>) {
+  constructor(
+    protected readonly props: ServiceBrokerProps,
+    opts?: RecursivePartial<ServiceBrokerOptions>,
+  ) {
     // save options
     this.opts = _.defaultsDeep(opts || {}, {
       log: {
@@ -56,36 +59,42 @@ export class ServiceBroker<DelegatorContext = any> {
 
     // create delegator from options
     const delegatorKeys = Object.keys(ServiceBrokerDelegatorConstructors);
-    let delegatorKey = delegatorKeys.find(type => !!this.opts[type as keyof ServiceBrokerDelegatorConstructorOptions]);
+    let delegatorKey = delegatorKeys.find((type) => !!this.opts[type as keyof ServiceBrokerDelegatorConstructorOptions]);
     if (!delegatorKey) {
       delegatorKey = delegatorKeys[0];
       this.props.logger.info(`available delegator options are not specified: use ${delegatorKey} delegator`);
     }
     const key = delegatorKey as keyof ServiceBrokerDelegatorConstructorOptions;
-    this.delegator = new (ServiceBrokerDelegatorConstructors[key])({
-      logger: this.props.logger.getChild(key),
-      emitEvent: this.emitEvent.bind(this),
-      emitServiceConnected: this.emitServiceConnected.bind(this),
-      emitServiceDisconnected: this.emitServiceDisconnected.bind(this),
-    }, this.opts[key] || {});
+    this.delegator = new ServiceBrokerDelegatorConstructors[key](
+      {
+        logger: this.props.logger.getChild(key),
+        emitEvent: this.emitEvent.bind(this),
+        emitServiceConnected: this.emitServiceConnected.bind(this),
+        emitServiceDisconnected: this.emitServiceDisconnected.bind(this),
+      },
+      this.opts[key] || {},
+    );
 
     this.delegatorSymbol = Symbol(`BrokerDelegator:${this.props.id}`);
 
     // create event buses
     this.eventPubSub = new EventPubSub({
-      onError: error => this.props.logger.error(error),
+      onError: (error) => this.props.logger.error(error),
       // eventNamePatternResolver: this.delegator.eventNameResolver,
       maxListeners: Infinity,
     });
 
     this.discoveryPubSub = new DiscoveryPubSub({
-      onError: error => this.props.logger.error(error),
+      onError: (error) => this.props.logger.error(error),
     });
 
     // create registry
-    this.registry = new ServiceRegistry({
-      logger: this.props.logger.getChild("registry"),
-    }, this.opts.registry);
+    this.registry = new ServiceRegistry(
+      {
+        logger: this.props.logger.getChild("registry"),
+      },
+      this.opts.registry,
+    );
   }
 
   /* lifecycle */
@@ -132,17 +141,20 @@ export class ServiceBroker<DelegatorContext = any> {
     if (!this.working) {
       return;
     }
-    if (!(service instanceof Service) || !service.id) { // unrecognized service
+    if (!(service instanceof Service) || !service.id) {
+      // unrecognized service
       this.props.logger.error(`service broker discovered a unrecognized service: ${service}`);
       return;
     }
     const foundService = this.registry.findServiceByHash(service.hash);
-    if (foundService) { // node pool updated
+    if (foundService) {
+      // node pool updated
       for (const node of service.nodeIdMap.values()) {
         foundService.addNode(node);
       }
       await this.discoveryPubSub.publish("nodePoolUpdated", service);
-    } else { // new service connected
+    } else {
+      // new service connected
       service.setBroker(this);
       this.registry.addService(service);
       await this.discoveryPubSub.publish("connected", service);
@@ -154,12 +166,15 @@ export class ServiceBroker<DelegatorContext = any> {
       return;
     }
     const foundService = this.registry.findServiceByHash(service.hash);
-    if (!foundService || !foundService.nodeIdMap.delete(nodeId)) { // unknown service
+    if (!foundService || !foundService.nodeIdMap.delete(nodeId)) {
+      // unknown service
       this.props.logger.error(`service broker has been disconnected from non-registered service node: ${service} (${nodeId})`);
-    } else if (foundService.nodeIdMap.size === 0) { // service disconnected
+    } else if (foundService.nodeIdMap.size === 0) {
+      // service disconnected
       this.registry.removeServiceByHash(foundService.hash);
       await this.discoveryPubSub.publish("disconnected", foundService);
-    } else { // node pool updated
+    } else {
+      // node pool updated
       await this.discoveryPubSub.publish("nodePoolUpdated", foundService);
     }
   }
@@ -169,7 +184,7 @@ export class ServiceBroker<DelegatorContext = any> {
     let delegatorContext: DelegatorContext | undefined = context.get(this.delegatorSymbol);
     if (!delegatorContext) {
       delegatorContext = this.delegator.createContext(context);
-      context.set(this.delegatorSymbol, delegatorContext, ctx => this.delegator.clearContext(ctx));
+      context.set(this.delegatorSymbol, delegatorContext, (ctx) => this.delegator.clearContext(ctx));
     }
     return delegatorContext;
   }
@@ -180,7 +195,7 @@ export class ServiceBroker<DelegatorContext = any> {
     let subscriptions: (number | AsyncIterator<EventPacket>)[] | undefined = context.get(ServiceBroker.EventSubscriptionSymbol);
     if (!subscriptions) {
       subscriptions = [];
-      context.set(ServiceBroker.EventSubscriptionSymbol, subscriptions, subs => {
+      context.set(ServiceBroker.EventSubscriptionSymbol, subscriptions, (subs) => {
         for (const sub of subs) {
           this.unsubscribeEvent(sub);
         }
@@ -195,7 +210,7 @@ export class ServiceBroker<DelegatorContext = any> {
     let batchingPool: BatchingPool | undefined = context.get(ServiceBroker.BatchingPoolSymbol);
     if (!batchingPool) {
       batchingPool = new BatchingPool(this.opts.batching);
-      context.set(ServiceBroker.BatchingPoolSymbol, batchingPool, pool => {
+      context.set(ServiceBroker.BatchingPoolSymbol, batchingPool, (pool) => {
         pool.clear();
       });
     }
@@ -205,7 +220,7 @@ export class ServiceBroker<DelegatorContext = any> {
   /* action call */
   public async call(context: APIRequestContext, args: CallArgs): Promise<any> {
     const ctx = this.getDelegatorContext(context);
-    const {action, params, batchingParams, disableCache} = args;
+    const { action, params, batchingParams, disableCache } = args;
     const node = this.delegator.selectActionTargetNode(ctx, action)!;
     // console.assert(node && action, "there are no available nodes to call the action");
 
@@ -213,12 +228,12 @@ export class ServiceBroker<DelegatorContext = any> {
     if (batchingParams) {
       const batchingPool = this.getBatchingPool(context);
       const batchingParamNames = Object.keys(batchingParams);
-      const batchingKey = batchingPool.getBatchingKey({action: action.id, params, batchingParamNames});
+      const batchingKey = batchingPool.getBatchingKey({ action: action.id, params, batchingParamNames });
 
       // set batching handler for this call
-      if (!batchingPool.hasBatchingHandler(batchingKey)) { // or register job
+      if (!batchingPool.hasBatchingHandler(batchingKey)) {
+        // or register job
         batchingPool.setBatchingHandler(batchingKey, async (batchingParamsList: readonly any[]) => {
-
           // merge common params with batching params
           const mergedParams = (params || {}) as any;
           for (const batchingParamName of batchingParamNames) {
@@ -235,22 +250,21 @@ export class ServiceBroker<DelegatorContext = any> {
           this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${"@"}${node} ${batchingParamsList.length} times in a batch from ${(context.id || "unknown") + "@" + (context.ip || "unknown")}`);
 
           // do batching call
-          const response = await this.delegator.call(ctx, {action, node, params: mergedParams, disableCache, batchedParamsLength: batchingParamsList.length });
-          this.registry.addActionExample({action, params: mergedParams, response});
+          const response = await this.delegator.call(ctx, { action, node, params: mergedParams, disableCache, batchedParamsLength: batchingParamsList.length });
+          this.registry.addActionExample({ action, params: mergedParams, response });
           return response;
         });
       }
 
       // add batch entry and wait response
       return batchingPool.batch(batchingKey, batchingParams);
-
     } else {
       // log in advance
-      this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${"@"}${node} from ${(context.id || "unknown" + "@" + (context.ip || "unknown"))}`);
+      this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${"@"}${node} from ${context.id || "unknown" + "@" + (context.ip || "unknown")}`);
 
       // normal request
-      const response = await this.delegator.call(ctx, {action, node, params, disableCache});
-      this.registry.addActionExample({action, params, response});
+      const response = await this.delegator.call(ctx, { action, node, params, disableCache });
+      this.registry.addActionExample({ action, params, response });
       return response;
     }
   }
@@ -311,23 +325,26 @@ export class ServiceBroker<DelegatorContext = any> {
   }
 
   /* params mapper */
-  public createParamsMapper<MappableArgs>(opts: ParamsMapperProps): ParamsMapper<MappableArgs> {
+  public createParamsMapper<MappableArgs extends { [key: string]: any }>(opts: ParamsMapperProps): ParamsMapper<MappableArgs> {
     return new ParamsMapper<MappableArgs>(opts);
   }
 
   /* compile inline function string */
-  public createInlineFunction<MappableArgs, Return>(props: InlineFunctionProps<MappableArgs, Return>): (args: MappableArgs) => Return {
+  public createInlineFunction<MappableArgs extends { [key: string]: any }, Return>(props: InlineFunctionProps<MappableArgs, Return>): (args: MappableArgs) => Return {
     return createInlineFunction<MappableArgs, Return>(props, this.opts.function);
   }
 
   /* service reporter */
   public createReporter(service: Readonly<Service>): Reporter {
-    return new Reporter({
-      logger: this.props.logger.getChild(`${service}\n`),
-      service,
-      props: null,
-      send: (messages, table) => this.delegator.report(service, messages, table),
-    }, this.opts.reporter);
+    return new Reporter(
+      {
+        logger: this.props.logger.getChild(`${service}\n`),
+        service,
+        props: null,
+        send: (messages, table) => this.delegator.report(service, messages, table),
+      },
+      this.opts.reporter,
+    );
   }
 
   /* pattern matching for action and event names */

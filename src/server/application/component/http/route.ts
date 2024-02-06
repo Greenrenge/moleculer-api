@@ -15,7 +15,7 @@ export class HTTPRoute extends Route {
   protected readonly props: HTTPRouteProps;
 
   constructor(props: Omit<HTTPRouteProps, "protocol">) {
-    const propsWithProtocol = {...props, protocol: "http"};
+    const propsWithProtocol = { ...props, protocol: "http" };
     super(propsWithProtocol as RouteProps);
     this.props = propsWithProtocol;
   }

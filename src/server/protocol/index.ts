@@ -13,13 +13,13 @@ export const ServerProtocolConstructors = {
 };
 
 export type ServerProtocolConstructorOptions = {
-  [ServerHTTPProtocol.key]: RecursivePartial<ServerHTTPProtocolOptions> | false,
-  [ServerHTTPSProtocol.key]:RecursivePartial<ServerHTTPSProtocolOptions> | false,
-  [ServerHTTP2Protocol.key]: RecursivePartial<ServerHTTP2ProtocolOptions> | false,
+  [ServerHTTPProtocol.key]: RecursivePartial<ServerHTTPProtocolOptions> | false;
+  [ServerHTTPSProtocol.key]: RecursivePartial<ServerHTTPSProtocolOptions> | false;
+  [ServerHTTP2Protocol.key]: RecursivePartial<ServerHTTP2ProtocolOptions> | false;
 };
 
 export const defaultServerProtocolConstructorOptions: ServerProtocolConstructorOptions = {
   [ServerHTTPProtocol.key]: ServerHTTPProtocol.autoLoadOptions,
-  [ServerHTTPSProtocol.key]:ServerHTTPSProtocol.autoLoadOptions,
+  [ServerHTTPSProtocol.key]: ServerHTTPSProtocol.autoLoadOptions,
   [ServerHTTP2Protocol.key]: ServerHTTP2Protocol.autoLoadOptions,
 };

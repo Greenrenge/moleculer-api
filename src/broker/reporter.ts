@@ -28,7 +28,10 @@ export type ReporterOptions = {
 export class Reporter {
   private readonly gatewayNodeId = os.hostname();
 
-  constructor(private readonly props: ReporterProps, private readonly opts?: Partial<ReporterOptions>) {
+  constructor(
+    private readonly props: ReporterProps,
+    private readonly opts?: Partial<ReporterOptions>,
+  ) {
     this.opts = _.defaultsDeep(this.opts || {}, {
       tableWidthZoomFactor: 1,
     });
@@ -39,16 +42,19 @@ export class Reporter {
   }
 
   public getChild(props: { [key: string]: any } | null): Reporter {
-    return new Reporter({
-      ...this.props,
-      props: props === null ? null : _.defaults(props, this.props.props),
-    }, this.opts);
+    return new Reporter(
+      {
+        ...this.props,
+        props: props === null ? null : _.defaults(props, this.props.props),
+      },
+      this.opts,
+    );
   }
 
   private readonly stack: Report[] = [];
 
   /* Flush messages */
-  private debouncedFlush = _.debounce(this.flush.bind(this), 2000, {maxWait: 5000}) as () => void;
+  private debouncedFlush = _.debounce(this.flush.bind(this), 2000, { maxWait: 5000 }) as () => void;
 
   protected async flush(): Promise<void> {
     if (this.stack.length === 0) {
@@ -56,10 +62,13 @@ export class Reporter {
     }
     const tbl = this.peekTable();
     try {
-      await this.props.send(this.stack.map(report => ({
-        ...report,
-        message: removeANSIColor(report.message),
-      })), tbl);
+      await this.props.send(
+        this.stack.map((report) => ({
+          ...report,
+          message: removeANSIColor(report.message),
+        })),
+        tbl,
+      );
     } catch (error) {
       this.props.logger.info(`failed to deliver report to origin service:\n${tbl}`);
       this.props.logger.error(error);
@@ -74,10 +83,13 @@ export class Reporter {
   /* Push messages to stack */
   private push(type: Report["type"], message: any, duplicationKey?: string): void {
     if (this.props.props !== null) {
-      message = _.defaults(typeof message === "object" && message !== null ? message : {original: message}, this.props.props);
+      message = _.defaults(typeof message === "object" && message !== null ? message : { original: message }, this.props.props);
     }
     if (duplicationKey) {
-      this.stack.splice(this.stack.findIndex(m => m.key === duplicationKey), 1);
+      this.stack.splice(
+        this.stack.findIndex((m) => m.key === duplicationKey),
+        1,
+      );
     }
     this.stack.push({
       type,
@@ -108,7 +120,7 @@ export class Reporter {
       } else if (typeof message === "object" && message !== null) {
         err = new Error();
         for (const [key, value] of Object.entries(message)) {
-          Object.defineProperty(err, key, {value});
+          Object.defineProperty(err, key, { value });
         }
       }
     }
@@ -119,23 +131,29 @@ export class Reporter {
   public peekTable(): string {
     const title = `${`api`}${`@${this.gatewayNodeId}`} -> ${this.props.service.toStringWithoutNodeIds()}`;
 
-    return `\n${title}\n` + table([["type", "message"].map(c => c)].concat(Reporter.reportsToRows(this.stack)), {
-      border: getBorderCharacters("norc"),
-      columns: {
-        0: {alignment: "left", wrapWord: false},
-        1: {alignment: "left", wrapWord: false, width: Math.ceil(100 * this.opts!.tableWidthZoomFactor!)},
-      },
-    });
+    return (
+      `\n${title}\n` +
+      table([["type", "message"].map((c) => c)].concat(Reporter.reportsToRows(this.stack)), {
+        border: getBorderCharacters("norc"),
+        columns: {
+          0: { alignment: "left", wrapWord: false },
+          1: { alignment: "left", wrapWord: false, width: Math.ceil(100 * this.opts!.tableWidthZoomFactor!) },
+        },
+      })
+    );
   }
 
   public static getTable(reports: ReadonlyArray<Readonly<Report>>): string {
-    return "\n" + table([["type", "message"].map(c => c)].concat(Reporter.reportsToRows(reports)), {
-      border: getBorderCharacters("norc"),
-      columns: {
-        0: {alignment: "left", wrapWord: false},
-        1: {alignment: "left", wrapWord: false, width: Math.ceil(80)},
-      },
-    });
+    return (
+      "\n" +
+      table([["type", "message"].map((c) => c)].concat(Reporter.reportsToRows(reports)), {
+        border: getBorderCharacters("norc"),
+        columns: {
+          0: { alignment: "left", wrapWord: false },
+          1: { alignment: "left", wrapWord: false, width: Math.ceil(80) },
+        },
+      })
+    );
   }
 
   private static tableTypeLabelColors: { [key in Report["type"]]: "green" | "yellow" | "white" | "red" } = {
@@ -146,7 +164,7 @@ export class Reporter {
   };
 
   private static reportsToRows(reports: ReadonlyArray<Readonly<Report>>): any[][] {
-    return reports.map(({message, type, at}) => {
+    return reports.map(({ message, type, at }) => {
       let content: any;
       if (typeof message === "string" || typeof message !== "object" || message === null) {
         content = message;
@@ -154,7 +172,7 @@ export class Reporter {
         content = peekObject(message);
       }
       return [
-        (type),
+        type,
         at.toISOString() + "\n" + content,
         // kleur.dim(at.toISOString()),
       ];
@@ -163,13 +181,12 @@ export class Reporter {
 }
 
 /*
-* remove stack from error instance
-* add field notation for object messages
-* rearrange indent multiline texts like GraphQL Schema
-*/
+ * remove stack from error instance
+ * add field notation for object messages
+ * rearrange indent multiline texts like GraphQL Schema
+ */
 const nonPreferredToStrings = [Object.prototype.toString, Array.prototype.toString, Error.prototype.toString];
 function peekObject(value: any, path: string = "", padEnd: number = 10, depth = 1): any {
-
   if (typeof value === "object" && value !== null) {
     let stopReading = depth > 4;
     if (stopReading) {
@@ -185,16 +202,16 @@ function peekObject(value: any, path: string = "", padEnd: number = 10, depth = 
 
       if (!stopReading) {
         return Object.getOwnPropertyNames(value)
-          .filter(key => !(key === "stack" && value instanceof Error))
+          .filter((key) => !(key === "stack" && value instanceof Error))
           .reduce((items, key) => items.concat(peekObject(value[key], path ? `${path}.${key}` : key, path ? padEnd + 4 : padEnd, depth + 1)), [] as any[])
-          .filter(item => !!item)
+          .filter((item) => !!item)
           .join("\n");
       }
     }
   }
 
   if (typeof value === "string") {
-    const matches = /^([ \t]+)[^\s]+$/mg.exec(value);
+    const matches = /^([ \t]+)[^\s]+$/gm.exec(value);
     if (matches) {
       let shortestIndent: string = "";
       for (const match of matches) {
@@ -203,7 +220,11 @@ function peekObject(value: any, path: string = "", padEnd: number = 10, depth = 
           shortestIndent = indent;
         }
       }
-      value = value.trim().split("\n").map((s, i) => (i === 0 ? "" : " ".repeat(padEnd)) + s.replace(shortestIndent, "").trimRight()).join("\n");
+      value = value
+        .trim()
+        .split("\n")
+        .map((s, i) => (i === 0 ? "" : " ".repeat(padEnd)) + s.replace(shortestIndent, "").trimRight())
+        .join("\n");
     } else {
       value = value.trim();
     }

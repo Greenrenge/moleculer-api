@@ -24,13 +24,13 @@ export const APIRequestContextFactoryConstructors = {
 };
 
 export type APIRequestContextFactoryConstructorOptions = {
-  [IDContextFactory.key]: RecursivePartial<IDContextFactoryOptions> | false,
-  [IPContextFactory.key]: RecursivePartial<IPContextFactoryOptions> | false,
-  [LocaleContextFactory.key]: RecursivePartial<LocaleContextFactoryOptions> | false,
-  [CookieContextFactory.key]: RecursivePartial<CookieContextFactoryOptions> | false,
-  [UserAgentContextFactory.key]: RecursivePartial<UserAgentContextFactoryOptions> | false,
-  [RequestContextFactory.key]: RecursivePartial<RequestContextFactoryOptions> | false,
-  [AuthContextFactory.key]: RecursivePartial<AuthContextFactoryOptions> | false,
+  [IDContextFactory.key]: RecursivePartial<IDContextFactoryOptions> | false;
+  [IPContextFactory.key]: RecursivePartial<IPContextFactoryOptions> | false;
+  [LocaleContextFactory.key]: RecursivePartial<LocaleContextFactoryOptions> | false;
+  [CookieContextFactory.key]: RecursivePartial<CookieContextFactoryOptions> | false;
+  [UserAgentContextFactory.key]: RecursivePartial<UserAgentContextFactoryOptions> | false;
+  [RequestContextFactory.key]: RecursivePartial<RequestContextFactoryOptions> | false;
+  [AuthContextFactory.key]: RecursivePartial<AuthContextFactoryOptions> | false;
 };
 
 export const defaultAPIRequestContextFactoryConstructorOptions: APIRequestContextFactoryConstructorOptions = {

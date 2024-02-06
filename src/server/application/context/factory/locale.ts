@@ -23,19 +23,22 @@ export class LocaleContextFactory extends APIRequestContextFactory<{
   };
   private readonly opts: LocaleContextFactoryOptions;
 
-  constructor(protected readonly props: APIRequestContextFactoryProps, opts?: RecursivePartial<LocaleContextFactoryOptions>) {
+  constructor(
+    protected readonly props: APIRequestContextFactoryProps,
+    opts?: RecursivePartial<LocaleContextFactoryOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, LocaleContextFactory.autoLoadOptions);
   }
 
   public create({ headers }: APIRequestContextSource) {
-    const { fallbackLanguage  } = this.opts;
+    const { fallbackLanguage } = this.opts;
     const languages = parseAcceptLanguage(headers["accept-language"] || "");
     let language: string = fallbackLanguage;
     let region: string | null = null;
     if (languages.length > 0) {
       language = languages[0].code;
-      region = languages.find(l => !!l.region)?.region || null;
+      region = languages.find((l) => !!l.region)?.region || null;
     }
 
     return {

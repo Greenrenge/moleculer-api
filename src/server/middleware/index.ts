@@ -18,12 +18,12 @@ export const ServerMiddlewareConstructors = {
 };
 
 export type ServerMiddlewareConstructorOptions = {
-  [HelmetMiddleware.key]: RecursivePartial<HelmetMiddlewareOptions> | false,
-  [CORSMiddleware.key]: RecursivePartial<CORSMiddlewareOptions> | false,
-  [ServeStaticMiddleware.key]: RecursivePartial<ServeStaticMiddlewareOptions> | false,
-  [BodyParserMiddleware.key]: RecursivePartial<BodyParserMiddlewareOptions> | false,
-  [LoggingMiddleware.key]: RecursivePartial<LoggingMiddlewareOptions> | false,
-  [ErrorMiddleware.key]: RecursivePartial<ErrorMiddlewareOptions> | false,
+  [HelmetMiddleware.key]: RecursivePartial<HelmetMiddlewareOptions> | false;
+  [CORSMiddleware.key]: RecursivePartial<CORSMiddlewareOptions> | false;
+  [ServeStaticMiddleware.key]: RecursivePartial<ServeStaticMiddlewareOptions> | false;
+  [BodyParserMiddleware.key]: RecursivePartial<BodyParserMiddlewareOptions> | false;
+  [LoggingMiddleware.key]: RecursivePartial<LoggingMiddlewareOptions> | false;
+  [ErrorMiddleware.key]: RecursivePartial<ErrorMiddlewareOptions> | false;
   // [OtherMiddleware.key]: RecursivePartial<OtherMiddlewareOptions> | false
 };
 

@@ -6,7 +6,10 @@ export type PluginProps = {
 };
 
 export abstract class Plugin<PluginSchema, PluginCatalog> extends Pluggable {
-  constructor(protected readonly props: PluginProps, opts?: any) {
+  constructor(
+    protected readonly props: PluginProps,
+    opts?: any,
+  ) {
     super();
   }
 

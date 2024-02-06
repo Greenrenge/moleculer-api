@@ -8,9 +8,10 @@ describe("GraphQL schema validation test", () => {
   });
 
   it("valid schema should be return true", () => {
-    return expect(plugin.validateSchema({
-      description: "..",
-      typeDefs: `
+    return expect(
+      plugin.validateSchema({
+        description: "..",
+        typeDefs: `
       type Player implements xx {
         name: String
       }
@@ -33,45 +34,46 @@ describe("GraphQL schema validation test", () => {
         a: String!
       }
     `,
-      resolvers: {
-        Player: {
-          // @ts-ignore
-          __isTypeOf: "",
-          // @ts-ignore
-          name: {
-            call: {
-              action: "test",
-              params: {},
-            },
-          },
-        },
-        // @ts-ignore
-        Query: {
-          viewer: {
-            call: {
-              action: "upload",
-              params: {
-                stream: "@.body.file",
-                meta: {
-                  filename: "@.body.name",
-                },
+        resolvers: {
+          Player: {
+            // @ts-ignore
+            __isTypeOf: "",
+            // @ts-ignore
+            name: {
+              call: {
+                action: "test",
+                params: {},
               },
-              map: "() => { return 1; }",
-            },
-            ignoreError: true,
-          },
-        },
-        Mutation: {
-          test: {
-            call: {
-              action: "test",
-              params: {},
             },
           },
           // @ts-ignore
-          __isTypeOf: "() => true" as any,
+          Query: {
+            viewer: {
+              call: {
+                action: "upload",
+                params: {
+                  stream: "@.body.file",
+                  meta: {
+                    filename: "@.body.name",
+                  },
+                },
+                map: "() => { return 1; }",
+              },
+              ignoreError: true,
+            },
+          },
+          Mutation: {
+            test: {
+              call: {
+                action: "test",
+                params: {},
+              },
+            },
+            // @ts-ignore
+            __isTypeOf: "() => true" as any,
+          },
         },
-      },
-    })).toMatchObject([]);
+      }),
+    ).toMatchObject([]);
   });
 });

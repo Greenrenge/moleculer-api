@@ -3,7 +3,7 @@ import { PolicyCatalog } from "../policy";
 
 /* Connectors */
 // injected params usage eg.: inject client websocket stream to broker delegator
-export type CallConnector<MappableArgs extends { [key: string]: any } = any> = (context: any, mappableArgs: MappableArgs, injectedParams?: {[key: string]: any}) => Promise<any>;
+export type CallConnector<MappableArgs extends { [key: string]: any } = any> = (context: any, mappableArgs: MappableArgs, injectedParams?: { [key: string]: any }) => Promise<any>;
 export type PublishConnector<MappableArgs extends { [key: string]: any } = any> = (context: any, mappableArgs: MappableArgs) => Promise<any>;
 export type SubscribeConnector<MappableArgs extends { [key: string]: any } = any, Listener extends EventListener | null = EventListener> = (
   context: any,
@@ -15,9 +15,11 @@ export type MapConnector<MappableArgs extends { [key: string]: any } = any> = (m
 export type Connector = CallConnector | PublishConnector | SubscribeConnector | SubscribeConnectorForAsyncIterator | MapConnector;
 
 /* Connectors Schema */
-export type ParamsConnectorSchema<MappableArgs extends { [key: string]: any } = any> = {
-  [key: string]: any;
-} | string;
+export type ParamsConnectorSchema<MappableArgs extends { [key: string]: any } = any> =
+  | {
+      [key: string]: any;
+    }
+  | string;
 
 export type MapConnectorSchema<Fn extends (mappableArgs: any) => any = (mappableArgs: { [key: string]: any }) => any> = string;
 
@@ -40,7 +42,7 @@ export type MapConnectorSchema<Fn extends (mappableArgs: any) => any = (mappable
   }
  */
 
-export type CallConnectorResponseMappableArgs<MappableArgs extends { [key: string]: any } = { [key: string]: any }> = { request: MappableArgs & { context: any; params: any }, response: any };
+export type CallConnectorResponseMappableArgs<MappableArgs extends { [key: string]: any } = { [key: string]: any }> = { request: MappableArgs & { context: any; params: any }; response: any };
 export type CallConnectorSchema<MappableArgs extends { [key: string]: any } = any> = {
   // action name
   action: string;
@@ -145,7 +147,7 @@ export type PublishPolicySchema = {
   [pluginKey: string]: any;
 };
 
-export type SubscribePolicyArgs = { context: any, event: string };
+export type SubscribePolicyArgs = { context: any; event: string };
 export type SubscribePolicySchema = {
   description: string;
   events: string[];

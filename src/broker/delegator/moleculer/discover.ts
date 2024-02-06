@@ -4,7 +4,7 @@ import { hashObject } from "../../../interface";
 
 export function proxyMoleculerServiceDiscovery(node: Moleculer.BrokerNode): Service[] {
   const id = node.id;
-  const {hostname, ipList, config, port, seq, metadata, sender, instanceID, services, ...meta} = node.rawInfo;
+  const { hostname, ipList, config, port, seq, metadata, sender, instanceID, services, ...meta } = node.rawInfo;
 
   // create node
   const foundNode = new ServiceNode({
@@ -21,7 +21,7 @@ export function proxyMoleculerServiceDiscovery(node: Moleculer.BrokerNode): Serv
     if (serviceId.startsWith("$")) continue;
 
     // tslint:disable-next-line:no-shadowed-variable
-    const {displayName = serviceId, description = null, ...meta} = service.metadata;
+    const { displayName = serviceId, description = null, ...meta } = service.metadata;
 
     // create service
     const foundService = new Service({
@@ -36,24 +36,27 @@ export function proxyMoleculerServiceDiscovery(node: Moleculer.BrokerNode): Serv
     // add actions
     for (const action of Object.values(service.actions) as any) {
       // tslint:disable-next-line:no-shadowed-variable
-      const {name, rawName, description = null, deprecated = false, params = null, cache = null, handler, meta = null, ...others } = action;
+      const { name, rawName, description = null, deprecated = false, params = null, cache = null, handler, meta = null, ...others } = action;
       foundService.addAction({
         id: name,
         displayName: rawName,
         description,
         deprecated,
         // TODO: streaming support for params schema generation
-        paramsSchema: meta && typeof meta === "object" ? {
-          stream: {
-            type: "any",
-            description: "An instance of `ReadableStream` as `ctx.params`",
-          },
-          meta: {
-            type: "object",
-            description: "Additional props to `ctx.meta`",
-            props: meta,
-          },
-        } : params,
+        paramsSchema:
+          meta && typeof meta === "object"
+            ? {
+              stream: {
+                type: "any",
+                description: "An instance of `ReadableStream` as `ctx.params`",
+              },
+              meta: {
+                type: "object",
+                description: "Additional props to `ctx.meta`",
+                props: meta,
+              },
+            }
+            : params,
         cachePolicy: cache && cache.ttl ? cache : null,
         meta: others,
       });
@@ -62,7 +65,7 @@ export function proxyMoleculerServiceDiscovery(node: Moleculer.BrokerNode): Serv
     // add subscribed events
     for (const event of Object.values(service.events) as any) {
       // tslint:disable-next-line:no-shadowed-variable
-      const {group = service.name, deprecated = false, description = null, name, displayName, ...meta} = event;
+      const { group = service.name, deprecated = false, description = null, name, displayName, ...meta } = event;
       foundService.addSubscribedEvent({
         id: name,
         displayName: displayName || name,

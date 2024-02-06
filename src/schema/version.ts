@@ -34,10 +34,10 @@ export class Version {
     return {
       version: this.shortHash,
       fullVersion: this.hash,
-      routes: this.routes.map(route => route.information),
-      integrations: this.integrations.map(integration => integration.information),
+      routes: this.routes.map((route) => route.information),
+      integrations: this.integrations.map((integration) => integration.information),
     };
-  };
+  }
 
   public getChildVersionProps() {
     return {
@@ -74,13 +74,12 @@ export class Version {
   // }
 
   public getRetryableIntegrations(): Readonly<ServiceAPIIntegration>[] {
-    const retryableIntegrations = this.$integrations
-      .filter(integration => integration.status === ServiceAPIIntegration.Status.Failed && !integration.service.empty);
+    const retryableIntegrations = this.$integrations.filter((integration) => integration.status === ServiceAPIIntegration.Status.Failed && !integration.service.empty);
 
     for (const integration of retryableIntegrations) {
       this.$integrations.splice(this.$integrations.indexOf(integration), 1);
     }
 
-    return retryableIntegrations.map(integration => integration.clone());
+    return retryableIntegrations.map((integration) => integration.clone());
   }
 }

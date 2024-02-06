@@ -8,39 +8,41 @@ describe("REST schema validation test", () => {
   });
 
   it("valid schema should be return true", () => {
-    return expect(plugin.validateSchema({
-      description: "..",
-      basePath: "/players",
-      routes: [
-        {
-          method: "GET",
-          path: "/test",
-          description: "",
-          deprecated: false,
-          call: {
-            params: {},
-            action: "",
+    return expect(
+      plugin.validateSchema({
+        description: "..",
+        basePath: "/players",
+        routes: [
+          {
+            method: "GET",
+            path: "/test",
+            description: "",
+            deprecated: false,
+            call: {
+              params: {},
+              action: "",
+            },
+            ignoreError: true,
           },
-          ignoreError: true,
-        },
-        {
-          method: "POST",
-          path: "/test",
-          description: "",
-          deprecated: false,
-          publish: {
-            event: "",
-            params: {},
+          {
+            method: "POST",
+            path: "/test",
+            description: "",
+            deprecated: false,
+            publish: {
+              event: "",
+              params: {},
+            },
           },
-        },
-        {
-          method: "GET",
-          path: "/test3",
-          description: "",
-          deprecated: false,
-          map: "({ params, response }) => ({ response, params})",
-        },
-      ],
-    })).toMatchObject([]);
+          {
+            method: "GET",
+            path: "/test3",
+            description: "",
+            deprecated: false,
+            map: "({ params, response }) => ({ response, params})",
+          },
+        ],
+      }),
+    ).toMatchObject([]);
   });
 });

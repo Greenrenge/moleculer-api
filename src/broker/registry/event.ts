@@ -16,8 +16,7 @@ type EventExample = EventPacket & { hash?: string };
 export class ServiceEvent {
   private readonly examples: EventExample[] = [];
 
-  constructor(protected readonly props: ServiceEventProps) {
-  }
+  constructor(protected readonly props: ServiceEventProps) {}
 
   public get service(): Readonly<Service> {
     return this.props.service;
@@ -49,7 +48,7 @@ export class ServiceEvent {
 
   public addExample(example: EventExample, limit: number): void {
     example.hash = hashObject(example);
-    if (this.examples.some(eg => eg.hash === example.hash)) {
+    if (this.examples.some((eg) => eg.hash === example.hash)) {
       return;
     }
     this.examples.unshift(example);

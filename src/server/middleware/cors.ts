@@ -21,13 +21,16 @@ export class CORSMiddleware extends ServerMiddleware {
   };
   private readonly opts: CORSMiddlewareOptions;
 
-  constructor(protected readonly props: ServerMiddlewareProps, opts?: RecursivePartial<CORSMiddlewareOptions>) {
+  constructor(
+    protected readonly props: ServerMiddlewareProps,
+    opts?: RecursivePartial<CORSMiddlewareOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, CORSMiddleware.autoLoadOptions);
   }
 
   public apply(modules: ServerApplicationComponentModules): void {
-    const {disableForWebSocket, ...opts} = this.opts;
+    const { disableForWebSocket, ...opts } = this.opts;
     const corsHandler = cors(opts);
     modules.http.use(corsHandler);
 
@@ -36,19 +39,23 @@ export class CORSMiddleware extends ServerMiddleware {
       modules.ws.on("connection", (socket, req) => {
         let allowed = false;
         let failed = false;
-        corsHandler(req as any, {
-          setHeader(key: string) {
-            if (key === "Access-Control-Allow-Origin") {
-              allowed = true;
+        corsHandler(
+          req as any,
+          {
+            setHeader(key: string) {
+              if (key === "Access-Control-Allow-Origin") {
+                allowed = true;
+              }
+            },
+            getHeader() {},
+          } as any,
+          (error?: any) => {
+            if (error) {
+              socket.emit("error", error);
+              failed = true;
             }
           },
-          getHeader() {},
-        } as any, (error?: any) => {
-          if (error) {
-            socket.emit("error", error);
-            failed = true;
-          }
-        });
+        );
         if (!failed && !allowed) {
           socket.emit("error", new Error("not allowed origin for websocket connection")); // TODO: normalize error
           socket.close();

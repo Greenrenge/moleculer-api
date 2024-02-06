@@ -9,12 +9,14 @@ const map = {
     if (validateInlineFunction(value)) {
       return true;
     }
-    return [{
-      type: "invalidFunctionString",
-      expected: "JavaScriptFunctionString",
-      actual: value,
-      message: "MapConnectorSchema should be a string which denotes a JavaScript function",
-    }];
+    return [
+      {
+        type: "invalidFunctionString",
+        expected: "JavaScriptFunctionString",
+        actual: value,
+        message: "MapConnectorSchema should be a string which denotes a JavaScript function",
+      },
+    ];
   },
 };
 
@@ -55,10 +57,7 @@ export const ConnectorValidator: { [connector in "call" | "params" | "publish" |
     type: "object",
     strict: true,
     props: {
-      event: [
-        {type: "string"},
-        requiredMap,
-      ],
+      event: [{ type: "string" }, requiredMap],
       params,
       groups: {
         type: "array",

@@ -17,6 +17,6 @@ export const ServerApplicationComponentConstructors = {
 };
 
 export type ServerApplicationComponentModules = {
-  [ServerHTTPApplication.key]: ServerHTTPApplication["module"],
-  [ServerWebSocketApplication.key]: ServerWebSocketApplication["module"],
+  [ServerHTTPApplication.key]: ServerHTTPApplication["module"];
+  [ServerWebSocketApplication.key]: ServerWebSocketApplication["module"];
 };

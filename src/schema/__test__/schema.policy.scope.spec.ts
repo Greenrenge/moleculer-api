@@ -12,8 +12,8 @@ const moleculer = {
 };
 
 const schema = getSchemaRegistry({
-  logger: {level: "error", label: "gateway", silent: false },
-  delegator: {moleculer: {...moleculer, nodeID: "gateway"}},
+  logger: { level: "error", label: "gateway", silent: false },
+  delegator: { moleculer: { ...moleculer, nodeID: "gateway" } },
 });
 
 const policy = {
@@ -38,8 +38,8 @@ const policy = {
 };
 
 const service1 = getMoleculerServiceBroker({
-  logger: {level: "error", label: "service1"},
-  moleculer: {...moleculer, nodeID: "service1"},
+  logger: { level: "error", label: "service1" },
+  moleculer: { ...moleculer, nodeID: "service1" },
   services: [
     {
       name: "echo",
@@ -94,7 +94,7 @@ const service1 = getMoleculerServiceBroker({
           },
           async handler(ctx) {
             return ctx.params.hello;
-          }
+          },
         },
         "authorized.bar": {
           params: {
@@ -105,7 +105,7 @@ const service1 = getMoleculerServiceBroker({
           },
           async handler(ctx) {
             return ctx.params.hello;
-          }
+          },
         },
         "guest.fooBar": () => {
           return true;
@@ -134,7 +134,7 @@ beforeAll(async () => {
 describe("schema policy should work", () => {
   it("scope plugin works", async () => {
     const branch = schema.getBranch("master")!;
-    const echoFooEndpoint = branch.latestVersion.routes.find(r => r.path === "/echo/foo")!;
+    const echoFooEndpoint = branch.latestVersion.routes.find((r) => r.path === "/echo/foo")!;
     const ctx = {
       get: jest.fn(),
       set: jest.fn(),
@@ -149,13 +149,15 @@ describe("schema policy should work", () => {
         } catch (err) {
           reject(err);
         }
-      })
-    ).rejects.toThrow(expect.objectContaining({
-      message: "Forbidden",
-      actual: [],
-      expected: ["echo-scope", "echo-foo-scope"],
-      description: [policy.call[0].description],
-    }));
+      }),
+    ).rejects.toThrow(
+      expect.objectContaining({
+        message: "Forbidden",
+        actual: [],
+        expected: ["echo-scope", "echo-foo-scope"],
+        description: [policy.call[0].description],
+      }),
+    );
     expect(res.send.mock.calls.length).toEqual(0);
 
     const ctx2 = {
@@ -176,14 +178,14 @@ describe("schema policy should work", () => {
         } catch (err) {
           reject(err);
         }
-      })
+      }),
     ).resolves.not.toThrow();
     expect(res2.send.mock.calls[0]).toEqual(["world!"]);
   });
 
   it("scope + filter plugin works", async () => {
     const branch = schema.getBranch("master")!;
-    const echoFooEndpoint = branch.latestVersion.routes.find(r => r.path === "/echo/bar")!;
+    const echoFooEndpoint = branch.latestVersion.routes.find((r) => r.path === "/echo/bar")!;
     const ctx = {
       get: jest.fn(),
       set: jest.fn(),
@@ -202,15 +204,15 @@ describe("schema policy should work", () => {
         } catch (err) {
           reject(err);
         }
-      })
-    ).rejects.toThrow(expect.objectContaining({
-      message: "Forbidden",
-      actual: ["echo-scope"],
-      expected: ["echo-scope", "echo-bar-scope"],
-      description: [
-        policy.call[2].description,
-      ],
-    }));
+      }),
+    ).rejects.toThrow(
+      expect.objectContaining({
+        message: "Forbidden",
+        actual: ["echo-scope"],
+        expected: ["echo-scope", "echo-bar-scope"],
+        description: [policy.call[2].description],
+      }),
+    );
     expect(res.send.mock.calls.length).toEqual(0);
 
     const ctx2 = {
@@ -230,19 +232,19 @@ describe("schema policy should work", () => {
         } catch (err) {
           reject(err);
         }
-      })
-    ).rejects.toThrow(expect.objectContaining({
-      message: "Forbidden",
-      description: [
-        policy.call[2].description,
-      ],
-    }));
+      }),
+    ).rejects.toThrow(
+      expect.objectContaining({
+        message: "Forbidden",
+        description: [policy.call[2].description],
+      }),
+    );
     expect(res2.send.mock.calls.length).toEqual(0);
   });
 
   it("(empty) plugin works", async () => {
     const branch = schema.getBranch("master")!;
-    const echoFooBarEndpoint = branch.latestVersion.routes.find(r => r.path === "/echo/foobar")!;
+    const echoFooBarEndpoint = branch.latestVersion.routes.find((r) => r.path === "/echo/foobar")!;
     const ctx = {
       get: jest.fn(),
       set: jest.fn(),
@@ -257,15 +259,12 @@ describe("schema policy should work", () => {
         } catch (err) {
           reject(err);
         }
-      })
+      }),
     ).resolves.not.toThrow();
     expect(res.send.mock.calls[0]).toEqual([true]);
   });
 });
 
 afterAll(async () => {
-  await Promise.all([
-    schema.stop(),
-    service1.stop(),
-  ]);
+  await Promise.all([schema.stop(), service1.stop()]);
 });

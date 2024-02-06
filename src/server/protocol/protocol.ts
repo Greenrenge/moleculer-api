@@ -9,7 +9,10 @@ export type ServerProtocolProps = {
 export type listeningURI = string;
 
 export abstract class ServerProtocol extends Pluggable {
-  constructor(protected readonly props: ServerProtocolProps, opts?: any) {
+  constructor(
+    protected readonly props: ServerProtocolProps,
+    opts?: any,
+  ) {
     super();
   }
 

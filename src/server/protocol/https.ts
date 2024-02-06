@@ -25,7 +25,7 @@ export class ServerHTTPSProtocol extends ServerProtocol {
   }
 
   public async start(modules: ServerApplicationComponentModules): Promise<listeningURI[]> {
-    const {port, hostname, ...tlsOpts} = this.opts;
+    const { port, hostname, ...tlsOpts } = this.opts;
 
     if (!tlsOpts.key || !tlsOpts.cert) {
       throw new Error("cannot run https protocol without key, cert file"); // TODO: normalize error
@@ -38,10 +38,7 @@ export class ServerHTTPSProtocol extends ServerProtocol {
 
     // listen
     this.server.listen(port, hostname);
-    return [
-      `https://${hostname}:${port}`,
-      `wss://${hostname}:${port}`,
-    ];
+    return [`https://${hostname}:${port}`, `wss://${hostname}:${port}`];
   }
 
   public async stop(): Promise<void> {

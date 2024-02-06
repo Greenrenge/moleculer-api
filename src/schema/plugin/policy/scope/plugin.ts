@@ -18,46 +18,52 @@ export class ScopePolicyPlugin extends PolicyPlugin<ScopePolicyPluginSchema, Sco
   };
   private opts: ScopePolicyPluginOptions;
 
-  constructor(protected readonly props: PolicyPluginProps, opts?: RecursivePartial<ScopePolicyPluginOptions>) {
+  constructor(
+    protected readonly props: PolicyPluginProps,
+    opts?: RecursivePartial<ScopePolicyPluginOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, ScopePolicyPlugin.autoLoadOptions);
   }
 
   public validateSchema(schema: Readonly<ScopePolicyPluginSchema>): ValidationError[] {
-    return validateValue(schema, {
-      type: "array",
-      items: "string",
-      empty: false,
-    }, {
-      field: "",
-    });
+    return validateValue(
+      schema,
+      {
+        type: "array",
+        items: "string",
+        empty: false,
+      },
+      {
+        field: "",
+      },
+    );
   }
 
-  public async start(): Promise<void> {
-  }
+  public async start(): Promise<void> {}
 
-  public async stop(): Promise<void> {
-  }
+  public async stop(): Promise<void> {}
 
   public describeSchema(schema: Readonly<ScopePolicyPluginSchema>): ScopePolicyPluginCatalog {
     return {} as ScopePolicyPluginCatalog;
   }
 
-  public compileCallPolicySchemata(schemata: ReadonlyArray<ScopePolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): CallPolicyTester {
+  public compileCallPolicySchemata(schemata: ReadonlyArray<ScopePolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): CallPolicyTester {
     return this.compilePolicySchemata(schemata, descriptions, integration) as CallPolicyTester;
   }
 
-  public compilePublishPolicySchemata(schemata: ReadonlyArray<ScopePolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): PublishPolicyTester {
+  public compilePublishPolicySchemata(schemata: ReadonlyArray<ScopePolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): PublishPolicyTester {
     return this.compilePolicySchemata(schemata, descriptions, integration) as PublishPolicyTester;
   }
 
-  public compileSubscribePolicySchemata(schemata: ReadonlyArray<ScopePolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): SubscribePolicyTester {
+  public compileSubscribePolicySchemata(schemata: ReadonlyArray<ScopePolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): SubscribePolicyTester {
     return this.compilePolicySchemata(schemata, descriptions, integration) as SubscribePolicyTester;
   }
 
   private compilePolicySchemata(
-    requiredScopesList: ReadonlyArray<ScopePolicyPluginSchema>, descriptions: ReadonlyArray<string|null>,
-    integration: Readonly<ServiceAPIIntegration>
+    requiredScopesList: ReadonlyArray<ScopePolicyPluginSchema>,
+    descriptions: ReadonlyArray<string | null>,
+    integration: Readonly<ServiceAPIIntegration>,
   ): CallPolicyTester | PublishPolicyTester | SubscribePolicyTester {
     const requiredScopes = [] as string[];
     for (const requiredScopesEntry of requiredScopesList) {
@@ -68,21 +74,24 @@ export class ScopePolicyPlugin extends PolicyPlugin<ScopePolicyPluginSchema, Sco
       }
     }
 
-    const descriptionsMap = requiredScopes.reduce((map, scope) => {
-      const matchedDescriptions: string[] = requiredScopesList.reduce((arr: string[], requiredScopesEntry, index) => {
-        const desc = descriptions[index];
-        if (desc && requiredScopesEntry.includes(scope)) {
-          if (!arr.includes(desc)) {
-            arr.push(desc);
+    const descriptionsMap = requiredScopes.reduce(
+      (map, scope) => {
+        const matchedDescriptions: string[] = requiredScopesList.reduce((arr: string[], requiredScopesEntry, index) => {
+          const desc = descriptions[index];
+          if (desc && requiredScopesEntry.includes(scope)) {
+            if (!arr.includes(desc)) {
+              arr.push(desc);
+            }
           }
-        }
-        return arr;
-      }, [] as string[]);
-      map[scope] = matchedDescriptions;
-      return map;
-    }, {} as {[scope: string]: string[]});
+          return arr;
+        }, [] as string[]);
+        map[scope] = matchedDescriptions;
+        return map;
+      },
+      {} as { [scope: string]: string[] },
+    );
 
-    return (args: Readonly<{ context: any; params: any; }>) => {
+    return (args: Readonly<{ context: any; params: any }>) => {
       const contextScopes = this.opts.getScopesFromContext(args.context);
       for (const requiredScope of requiredScopes as string[]) {
         if (!contextScopes.includes(requiredScope)) {

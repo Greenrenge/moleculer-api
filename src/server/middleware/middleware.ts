@@ -7,7 +7,10 @@ export type ServerMiddlewareProps = {
 };
 
 export abstract class ServerMiddleware extends Pluggable {
-  constructor(protected readonly props: ServerMiddlewareProps, opts?: any) {
+  constructor(
+    protected readonly props: ServerMiddlewareProps,
+    opts?: any,
+  ) {
     super();
   }
 

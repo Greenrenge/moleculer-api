@@ -1,7 +1,7 @@
 import { normalizeValidationSchema, NormalizedValidationSchema, hashObject } from "../../interface";
 import { Service } from "./index";
 
-export type ServiceActionCachePolicy = { ttl: number, [key: string]: any };
+export type ServiceActionCachePolicy = { ttl: number; [key: string]: any };
 
 export type ServiceActionProps = {
   service: Service;
@@ -14,7 +14,7 @@ export type ServiceActionProps = {
   meta: object | null;
 };
 
-export type ActionExample = { params: any, response: any, hash?: string };
+export type ActionExample = { params: any; response: any; hash?: string };
 
 export class ServiceAction {
   private readonly examples: ActionExample[] = [];
@@ -31,7 +31,7 @@ export class ServiceAction {
     return {
       ...restProps,
       examples: includeExamples ? this.getExamples() : null,
-    }
+    };
   }
 
   public toString(): string {
@@ -68,7 +68,7 @@ export class ServiceAction {
 
   public addExample(example: ActionExample, limit: number): void {
     example.hash = hashObject(example);
-    if (this.examples.some(eg => eg.hash === example.hash)) {
+    if (this.examples.some((eg) => eg.hash === example.hash)) {
       return;
     }
     this.examples.unshift(example);

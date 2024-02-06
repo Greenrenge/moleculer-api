@@ -28,229 +28,252 @@ export class RESTProtocolPlugin extends ProtocolPlugin<RESTProtocolPluginSchema,
   };
   private readonly opts: RESTProtocolPluginOptions;
 
-  constructor(protected readonly props: ProtocolPluginProps, opts?: RecursivePartial<RESTProtocolPluginOptions>) {
+  constructor(
+    protected readonly props: ProtocolPluginProps,
+    opts?: RecursivePartial<RESTProtocolPluginOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, RESTProtocolPlugin.autoLoadOptions);
   }
 
-  public async start(): Promise<void> {
-  }
+  public async start(): Promise<void> {}
 
-  public async stop(): Promise<void> {
-  }
+  public async stop(): Promise<void> {}
 
   public validateSchema(schema: RESTProtocolPluginSchema): ValidationError[] {
     const routeMethodAndPaths: string[] = [];
-    return validateObject(schema, {
-      description: {
-        type: "string",
-        optional: true,
-      },
-      basePath: {
-        type: "custom",
-        check(value: any) {
-          if (HTTPRoute.isNonRootStaticPath(value)) {
-            return true;
-          }
-          return [{
-            type: "basePathInvalid",
-            field: "basePath",
-            actual: value,
-            expected: HTTPRoute.nonRootStaticPathRegExp,
-            message: `basePath should be a valid non-root static path: eg. "/players" | "/players/billings"`,
-          }];
+    return validateObject(
+      schema,
+      {
+        description: {
+          type: "string",
+          optional: true,
         },
-      },
-      routes: {
-        type: "array",
-        empty: false,
-        items: {
+        basePath: {
           type: "custom",
           check(value: any) {
-            const idx = schema.routes.indexOf(value);
-            if (typeof value !== "object") {
-              return [{
-                field: `routes[${idx}]`,
-                type: "type",
-                message: "route definition should be an object",
+            if (HTTPRoute.isNonRootStaticPath(value)) {
+              return true;
+            }
+            return [
+              {
+                type: "basePathInvalid",
+                field: "basePath",
                 actual: value,
-              }];
-            }
-
-            const {path, deprecated, description, method, ...restProps} = value;
-
-            // path: string;
-            if (!HTTPRoute.isNonRootDynamicPath(path) && !HTTPRoute.isRootStaticPath(path)) {
-              return [{
-                field: `routes[${idx}].path`,
-                type: "routePathInvalid",
-                actual: path,
-                expected: [HTTPRoute.nonRootDynamicPath, HTTPRoute.rootStaticPathRegExp],
-                message: `route path should be a valid path: eg. "/" | "/accounts" | "/accounts/:id"`,
-              }];
-            }
-
-            // description?: string;
-            // deprecated?: boolean;
-            // method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
-            const errors = validateObject({deprecated, description, method}, {
-              description: {
-                type: "string",
-                optional: true,
+                expected: HTTPRoute.nonRootStaticPathRegExp,
+                message: `basePath should be a valid non-root static path: eg. "/players" | "/players/billings"`,
               },
-              deprecated: {
-                type: "boolean",
-                optional: true,
-              },
-              method: {
-                type: "enum",
-                values: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-              },
-            }, {
-              strict: true,
-              field: `routes[${idx}]`,
-            });
-
-            if (errors.length === 0) {
-              // check duplicate path
-              const routePathAndMethod = `${method} ${path}`;
-              if (routeMethodAndPaths.includes(routePathAndMethod)) {
-                return [{
-                  field: `routes[${idx}].path`,
-                  type: "routePathDuplicate",
-                  actual: routePathAndMethod,
-                  expected: undefined,
-                  message: `a pair of route method and path should be unique"`,
-                }];
+            ];
+          },
+        },
+        routes: {
+          type: "array",
+          empty: false,
+          items: {
+            type: "custom",
+            check(value: any) {
+              const idx = schema.routes.indexOf(value);
+              if (typeof value !== "object") {
+                return [
+                  {
+                    field: `routes[${idx}]`,
+                    type: "type",
+                    message: "route definition should be an object",
+                    actual: value,
+                  },
+                ];
               }
-              routeMethodAndPaths.push(routePathAndMethod);
-            }
 
-            // validate method and each connector
-            let rule: ValidationRule | ValidationRule[];
-            switch (method) {
-              case "GET":
-                if (typeof restProps.call !== "undefined") {
-                  rule = {
-                    type: "object",
-                    strict: true,
-                    props: {
-                      call: ConnectorValidator.call,
-                      ignoreError: {
-                        type: "boolean",
-                        optional: true,
-                      },
-                    },
-                    messages: {
-                      objectStrict: "RESTCallableRouteResolverSchema cannot be with other connectors",
-                    },
-                  };
-                } else if (typeof restProps.map !== "undefined") {
-                  rule = {
-                    type: "object",
-                    strict: true,
-                    props: {
-                      map: ConnectorValidator.map,
-                    },
-                    messages: {
-                      objectStrict: "RESTMappableRouteResolverSchema cannot be with other connectors",
-                    },
-                  };
-                } else {
-                  errors.push({
-                    type: "routeInvalid",
-                    field: `routes[${idx}]`,
-                    message: `${method} route should have either call or map property`,
-                    expected: "RESTCallableRouteResolverSchema | RESTMappableRouteResolverSchema",
-                  });
-                }
-                break;
+              const { path, deprecated, description, method, ...restProps } = value;
 
-              case "POST":
-              case "PUT":
-              case "PATCH":
-              case "DELETE":
-                if (typeof restProps.call !== "undefined") {
-                  rule = {
-                    type: "object",
-                    strict: true,
-                    props: {
-                      call: ConnectorValidator.call,
-                    },
-                    messages: {
-                      objectStrict: "RESTCallableRouteResolverSchema cannot be with other connectors",
-                    },
-                  };
-                } else if (restProps.publish !== "undefined") {
-                  rule = {
-                    type: "object",
-                    strict: true,
-                    props: {
-                      publish: ConnectorValidator.publish,
-                    },
-                    messages: {
-                      objectStrict: "RESTPublishableRouteResolverSchema cannot be with other connectors",
-                    },
-                  };
-                } else {
-                  errors.push({
-                    type: "routeInvalid",
-                    field: `routes[${idx}]`,
-                    message: `${method} route should have either call or publish property`,
-                    expected: `Omit<RESTCallableRouteResolverSchema, "ignoreError"> | RESTPublishableRouteResolverSchema`,
-                  });
-                }
-                break;
-            }
+              // path: string;
+              if (!HTTPRoute.isNonRootDynamicPath(path) && !HTTPRoute.isRootStaticPath(path)) {
+                return [
+                  {
+                    field: `routes[${idx}].path`,
+                    type: "routePathInvalid",
+                    actual: path,
+                    expected: [HTTPRoute.nonRootDynamicPath, HTTPRoute.rootStaticPathRegExp],
+                    message: `route path should be a valid path: eg. "/" | "/accounts" | "/accounts/:id"`,
+                  },
+                ];
+              }
 
-            // @ts-ignore
-            if (rule) {
-              errors.push(...validateValue(restProps,
-                // @ts-ignore
-                rule, {
+              // description?: string;
+              // deprecated?: boolean;
+              // method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+              const errors = validateObject(
+                { deprecated, description, method },
+                {
+                  description: {
+                    type: "string",
+                    optional: true,
+                  },
+                  deprecated: {
+                    type: "boolean",
+                    optional: true,
+                  },
+                  method: {
+                    type: "enum",
+                    values: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+                  },
+                },
+                {
                   strict: true,
                   field: `routes[${idx}]`,
-                }));
-            }
-            return errors;
+                },
+              );
+
+              if (errors.length === 0) {
+                // check duplicate path
+                const routePathAndMethod = `${method} ${path}`;
+                if (routeMethodAndPaths.includes(routePathAndMethod)) {
+                  return [
+                    {
+                      field: `routes[${idx}].path`,
+                      type: "routePathDuplicate",
+                      actual: routePathAndMethod,
+                      expected: undefined,
+                      message: `a pair of route method and path should be unique"`,
+                    },
+                  ];
+                }
+                routeMethodAndPaths.push(routePathAndMethod);
+              }
+
+              // validate method and each connector
+              let rule: ValidationRule | ValidationRule[];
+              switch (method) {
+                case "GET":
+                  if (typeof restProps.call !== "undefined") {
+                    rule = {
+                      type: "object",
+                      strict: true,
+                      props: {
+                        call: ConnectorValidator.call,
+                        ignoreError: {
+                          type: "boolean",
+                          optional: true,
+                        },
+                      },
+                      messages: {
+                        objectStrict: "RESTCallableRouteResolverSchema cannot be with other connectors",
+                      },
+                    };
+                  } else if (typeof restProps.map !== "undefined") {
+                    rule = {
+                      type: "object",
+                      strict: true,
+                      props: {
+                        map: ConnectorValidator.map,
+                      },
+                      messages: {
+                        objectStrict: "RESTMappableRouteResolverSchema cannot be with other connectors",
+                      },
+                    };
+                  } else {
+                    errors.push({
+                      type: "routeInvalid",
+                      field: `routes[${idx}]`,
+                      message: `${method} route should have either call or map property`,
+                      expected: "RESTCallableRouteResolverSchema | RESTMappableRouteResolverSchema",
+                    });
+                  }
+                  break;
+
+                case "POST":
+                case "PUT":
+                case "PATCH":
+                case "DELETE":
+                  if (typeof restProps.call !== "undefined") {
+                    rule = {
+                      type: "object",
+                      strict: true,
+                      props: {
+                        call: ConnectorValidator.call,
+                      },
+                      messages: {
+                        objectStrict: "RESTCallableRouteResolverSchema cannot be with other connectors",
+                      },
+                    };
+                  } else if (restProps.publish !== "undefined") {
+                    rule = {
+                      type: "object",
+                      strict: true,
+                      props: {
+                        publish: ConnectorValidator.publish,
+                      },
+                      messages: {
+                        objectStrict: "RESTPublishableRouteResolverSchema cannot be with other connectors",
+                      },
+                    };
+                  } else {
+                    errors.push({
+                      type: "routeInvalid",
+                      field: `routes[${idx}]`,
+                      message: `${method} route should have either call or publish property`,
+                      expected: `Omit<RESTCallableRouteResolverSchema, "ignoreError"> | RESTPublishableRouteResolverSchema`,
+                    });
+                  }
+                  break;
+              }
+
+              // @ts-ignore
+              if (rule) {
+                errors.push(
+                  ...validateValue(
+                    restProps,
+                    // @ts-ignore
+                    rule,
+                    {
+                      strict: true,
+                      field: `routes[${idx}]`,
+                    },
+                  ),
+                );
+              }
+              return errors;
+            },
           },
         },
       },
-    }, {
-      strict: true,
-    });
+      {
+        strict: true,
+      },
+    );
   }
 
-  public compileSchemata(routeHashMapCache: Readonly<Map<string, Readonly<Route>>>, integrations: Readonly<ServiceAPIIntegration>[], branch: Branch): { hash: string, route: Readonly<Route> }[] {
-    const items = new Array<{ hash: string, route: Readonly<Route> }>();
+  public compileSchemata(routeHashMapCache: Readonly<Map<string, Readonly<Route>>>, integrations: Readonly<ServiceAPIIntegration>[], branch: Branch): { hash: string; route: Readonly<Route> }[] {
+    const items = new Array<{ hash: string; route: Readonly<Route> }>();
 
     // introspection routes
     if (this.opts.introspection) {
       const introspectionRouteHash = "static@introspection";
       items.push({
         hash: introspectionRouteHash,
-        route: routeHashMapCache.get(introspectionRouteHash) || new HTTPRoute({
-          path: "/~status",
-          method: "GET",
-          description: `${branch.name} branch introspection endpoint`,
-          handler: async (context, req, res) => {
-            this.sendResponse(res, branch.getInformation(true));
-          },
-        }),
+        route:
+          routeHashMapCache.get(introspectionRouteHash) ||
+          new HTTPRoute({
+            path: "/~status",
+            method: "GET",
+            description: `${branch.name} branch introspection endpoint`,
+            handler: async (context, req, res) => {
+              this.sendResponse(res, branch.getInformation(true));
+            },
+          }),
       });
     }
 
     for (const integration of integrations) {
       const schema: RESTProtocolPluginSchema = (integration.schema.protocol as any)[this.key];
       for (const routeSchema of schema.routes) {
-
         // the source object below hash contains properties which can make this route unique
         const routeHash = hashObject([schema.basePath, routeSchema, integration.service.hash], true);
 
         // cache hit
         const cachedRoute = routeHashMapCache.get(routeHash);
         if (cachedRoute) {
-          items.push({hash: routeHash, route: cachedRoute});
+          items.push({ hash: routeHash, route: cachedRoute });
           continue;
         }
 
@@ -275,7 +298,7 @@ export class RESTProtocolPlugin extends ProtocolPlugin<RESTProtocolPluginSchema,
         }
 
         if (route) {
-          items.push({hash: routeHash, route});
+          items.push({ hash: routeHash, route });
         }
       }
     }
@@ -289,8 +312,8 @@ export class RESTProtocolPlugin extends ProtocolPlugin<RESTProtocolPluginSchema,
     });
 
     const handler: HTTPRouteHandler = (context, req, res) => {
-      const {params, query, body} = req;
-      const mappableArgs = {context, path: params, query, body};
+      const { params, query, body } = req;
+      const mappableArgs = { context, path: params, query, body };
       const result = mapConnector(mappableArgs);
       this.sendResponse(res, result);
     };
@@ -303,8 +326,7 @@ export class RESTProtocolPlugin extends ProtocolPlugin<RESTProtocolPluginSchema,
     });
   }
 
-  private createRouteFromCallConnectorScheme(path: string, method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
-                                             schema: RESTCallableRouteResolverSchema, integration: Readonly<ServiceAPIIntegration>): Readonly<HTTPRoute> {
+  private createRouteFromCallConnectorScheme(path: string, method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", schema: RESTCallableRouteResolverSchema, integration: Readonly<ServiceAPIIntegration>): Readonly<HTTPRoute> {
     const callConnector = ConnectorCompiler.call(schema.call, integration, this.props.policyPlugins, {
       explicitMappableKeys: ["context", "path", "query", "body"],
       implicitMappableKeys: ["path"],
@@ -312,7 +334,7 @@ export class RESTProtocolPlugin extends ProtocolPlugin<RESTProtocolPluginSchema,
       disableCache: false,
     });
 
-    const {ignoreError} = schema;
+    const { ignoreError } = schema;
     const multipart = new MultipartFormDataHandler(this.opts.uploads);
 
     const handler: HTTPRouteHandler = async (context, req, res) => {
@@ -323,11 +345,10 @@ export class RESTProtocolPlugin extends ProtocolPlugin<RESTProtocolPluginSchema,
           req.body = Object.assign(req.body || {}, uploads);
         }
 
-        const {params, query, body} = req;
-        const mappableArgs = {context, path: params, query, body};
+        const { params, query, body } = req;
+        const mappableArgs = { context, path: params, query, body };
         const result = await callConnector(context, mappableArgs);
         this.sendResponse(res, result);
-
       } catch (error) {
         if (ignoreError) {
           this.sendResponse(res, null);
@@ -345,15 +366,14 @@ export class RESTProtocolPlugin extends ProtocolPlugin<RESTProtocolPluginSchema,
     });
   }
 
-  private createRouteFromPublishConnectorScheme(path: string, method: "POST" | "PUT" | "PATCH" | "DELETE",
-                                                schema: RESTPublishableRouteResolverSchema, integration: Readonly<ServiceAPIIntegration>): Readonly<HTTPRoute> {
+  private createRouteFromPublishConnectorScheme(path: string, method: "POST" | "PUT" | "PATCH" | "DELETE", schema: RESTPublishableRouteResolverSchema, integration: Readonly<ServiceAPIIntegration>): Readonly<HTTPRoute> {
     const publishConnector = ConnectorCompiler.publish(schema.publish, integration, this.props.policyPlugins, {
       mappableKeys: ["context", "path", "query", "body"],
     });
 
     const handler: HTTPRouteHandler = async (context, req, res) => {
-      const {params, query, body} = req;
-      const mappableArgs = {context, path: params, query, body};
+      const { params, query, body } = req;
+      const mappableArgs = { context, path: params, query, body };
       const result = await publishConnector(context, mappableArgs);
       this.sendResponse(res, result);
     };

@@ -4,18 +4,19 @@ export { ServiceBrokerDelegator };
 
 type ServiceBrokerDelegatorClass = typeof ServiceBrokerDelegator;
 
-interface ServiceBrokerDelegatorInterface extends ServiceBrokerDelegatorClass {
-}
+interface ServiceBrokerDelegatorInterface extends ServiceBrokerDelegatorClass {}
 
 export const ServiceBrokerDelegatorConstructors: any = {
   [MoleculerServiceBrokerDelegator.key]: MoleculerServiceBrokerDelegator as ServiceBrokerDelegatorInterface,
   // [OtherServiceBrokerDelegator.key]: OtherServiceBrokerDelegator as ServiceBrokerDelegatorInterface,
 };
 
-export type ServiceBrokerDelegatorConstructorOptions = {
-  [MoleculerServiceBrokerDelegator.key]: MoleculerServiceBrokerDelegatorOptions;
-}/* | {
+export type ServiceBrokerDelegatorConstructorOptions =
+  | {
+      [MoleculerServiceBrokerDelegator.key]: MoleculerServiceBrokerDelegatorOptions;
+    } /* | {
   [OtherServiceBrokerDelegator.key]: OtherServiceBrokerDelegatorOptions;
-}*/ | {
-  [key: string]: never;
-};
+}*/
+  | {
+      [key: string]: never;
+    };

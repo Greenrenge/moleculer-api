@@ -5,7 +5,7 @@ describe("Schema registry start", () => {
   const mock = jest.fn().mockName("listeners.updated.master");
   beforeAll(async () => {
     await schema.start({
-      updated: branch => {
+      updated: (branch) => {
         if (branch.isMaster) {
           mock();
         }

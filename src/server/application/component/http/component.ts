@@ -28,7 +28,7 @@ export class ServerHTTPApplication extends ServerApplicationComponent<HTTPRoute>
     // create express.Application without http.Server instance
     this.module = express();
     Object.assign(this.module.settings, {
-      "env": "production",
+      env: "production",
       "json spaces": this.opts.jsonSpaces || null,
       "case sensitive routing": false,
       "strict routing": false,
@@ -55,7 +55,6 @@ export class ServerHTTPApplication extends ServerApplicationComponent<HTTPRoute>
   }
 
   public mountRoutes(routes: ReadonlyArray<Readonly<HTTPRoute>>, pathPrefixes: string[], createContext: APIRequestContextConstructor): Readonly<RouteHandlerMap<HTTPRoute>> {
-
     // create new express.Router for given routes and mount to express.Application
     const expressRouter = express.Router();
     this.module.use(expressRouter);

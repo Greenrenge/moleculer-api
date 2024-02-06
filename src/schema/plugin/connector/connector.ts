@@ -5,19 +5,25 @@ import { ServiceAPIIntegration } from "../../integration";
 import { composeAsyncIterators, AsyncIteratorComposeItem } from "../../../interface";
 import { PolicyCompiler } from "./policy";
 import {
-  CallConnectorSchema, CallConnector, CallConnectorResponseMappableArgs, CallPolicyArgs,
+  CallConnectorSchema,
+  CallConnector,
+  CallConnectorResponseMappableArgs,
+  CallPolicyArgs,
   MapConnector,
   MapConnectorSchema,
   PublishConnector,
   PublishConnectorResponseMappableArgs,
   PublishConnectorSchema,
-  SubscribeConnector, SubscribeConnectorResponseMappableArgs,
-  SubscribeConnectorSchema, SubscribePolicyArgs, PublishPolicyArgs,
+  SubscribeConnector,
+  SubscribeConnectorResponseMappableArgs,
+  SubscribeConnectorSchema,
+  SubscribePolicyArgs,
+  PublishPolicyArgs,
 } from "./schema";
-
 /* use below functions to implement ProtocolPlugin.compileSchema methods */
+
 export const ConnectorCompiler = {
-  map<MappableArgs>(
+  map<MappableArgs extends { [key: string]: any }>(
     schema: Readonly<MapConnectorSchema>,
     integration: Readonly<ServiceAPIIntegration>,
     opts: {
@@ -31,7 +37,7 @@ export const ConnectorCompiler = {
       function: schema,
       mappableKeys: opts.mappableKeys,
       reporter: integration.reporter.getChild({
-        field: field,
+        field,
         schema,
       }),
     });
@@ -63,32 +69,35 @@ export const ConnectorCompiler = {
     let paramsMapper: ParamsMapper<MappableArgs>;
 
     // to filter request
-    const ifMapper = schema.if ? broker.createInlineFunction<MappableArgs, boolean>({
-      function: schema.if,
-      mappableKeys: opts.explicitMappableKeys,
-      reporter: integration.reporter.getChild({
-        field: field + ".if",
-        schema: schema.if,
-      }),
-    }) : null;
+    const ifMapper = schema.if
+      ? broker.createInlineFunction<MappableArgs, boolean>({
+        function: schema.if,
+        mappableKeys: opts.explicitMappableKeys,
+        reporter: integration.reporter.getChild({
+          field: field + ".if",
+          schema: schema.if,
+        }),
+      })
+      : null;
 
     // to map response
-    const responseMapper = schema.map ? broker.createInlineFunction<CallConnectorResponseMappableArgs, any>({
-      function: schema.map,
-      mappableKeys: ["request", "response"],
-      reporter: integration.reporter.getChild({
-        field: field + ".map",
-        schema: schema.map,
-      }),
-    }) : null;
+    const responseMapper = schema.map
+      ? broker.createInlineFunction<CallConnectorResponseMappableArgs, any>({
+        function: schema.map,
+        mappableKeys: ["request", "response"],
+        reporter: integration.reporter.getChild({
+          field: field + ".map",
+          schema: schema.map,
+        }),
+      })
+      : null;
 
     // to apply access control policy plugin
-    const policySchemata = integration.schema.policy && Array.isArray(integration.schema.policy.call)
-      ? integration.schema.policy.call.filter(policy => policy.actions.some(actionNamePattern => broker.matchActionName(actionId, actionNamePattern)))
-      : [];
+    const policySchemata =
+      integration.schema.policy && Array.isArray(integration.schema.policy.call) ? integration.schema.policy.call.filter((policy) => policy.actions.some((actionNamePattern) => broker.matchActionName(actionId, actionNamePattern))) : [];
 
     // to test permission
-    const policyTester = policySchemata.length ? PolicyCompiler.call(policySchemata, policyPlugins,  integration, {}) : null;
+    const policyTester = policySchemata.length ? PolicyCompiler.call(policySchemata, policyPlugins, integration, {}) : null;
 
     const connector: CallConnector<MappableArgs> = async (context, mappableArgs, injectedParams): Promise<any> => {
       // dynamically load action before first call
@@ -119,10 +128,10 @@ export const ConnectorCompiler = {
       }
 
       // map params
-      const {params, batchingParams} = paramsMapper.map(mappableArgs);
+      const { params, batchingParams } = paramsMapper.map(mappableArgs);
 
       // test policy
-      const request: CallPolicyArgs<MappableArgs> = {...mappableArgs, params: {...params, ...batchingParams} };
+      const request: CallPolicyArgs<MappableArgs> = { ...mappableArgs, params: { ...params, ...batchingParams } };
       if (policyTester && !policyTester(request)) {
         throw new Error("forbidden call"); // TODO: normalize error
       }
@@ -136,13 +145,13 @@ export const ConnectorCompiler = {
       });
 
       // map response
-      return responseMapper ? responseMapper({request, response}) : response;
+      return responseMapper ? responseMapper({ request, response }) : response;
     };
 
     return withLabel(connector, `callConnector`);
   },
 
-  publish<MappableArgs>(
+  publish<MappableArgs extends { [key: string]: any }>(
     schema: Readonly<PublishConnectorSchema>,
     integration: Readonly<ServiceAPIIntegration>,
     policyPlugins: ReadonlyArray<Readonly<PolicyPlugin<any, any>>>,
@@ -169,26 +178,30 @@ export const ConnectorCompiler = {
     });
 
     // to filter packet
-    const packetFilter = schema.filter ? broker.createInlineFunction<PublishConnectorResponseMappableArgs, boolean>({
-      function: schema.filter,
-      mappableKeys: ["context", "event", "broadcast", "params"],
-      reporter: integration.reporter.getChild({
-        field: field + ".filter",
-        schema: schema.filter,
-      }),
-      // returnTypeCheck: value => typeof value === "boolean",
-      // returnTypeNotation: "boolean",
-    }) : null;
+    const packetFilter = schema.filter
+      ? broker.createInlineFunction<PublishConnectorResponseMappableArgs, boolean>({
+        function: schema.filter,
+        mappableKeys: ["context", "event", "broadcast", "params"],
+        reporter: integration.reporter.getChild({
+          field: field + ".filter",
+          schema: schema.filter,
+        }),
+        // returnTypeCheck: value => typeof value === "boolean",
+        // returnTypeNotation: "boolean",
+      })
+      : null;
 
     // to map response
-    const responseMapper = schema.map ? broker.createInlineFunction<PublishConnectorResponseMappableArgs, any>({
-      function: schema.map,
-      mappableKeys: ["context", "event", "params", "groups", "broadcast"],
-      reporter: integration.reporter.getChild({
-        field: field + ".map",
-        schema: schema.map,
-      }),
-    }) : null;
+    const responseMapper = schema.map
+      ? broker.createInlineFunction<PublishConnectorResponseMappableArgs, any>({
+        function: schema.map,
+        mappableKeys: ["context", "event", "params", "groups", "broadcast"],
+        reporter: integration.reporter.getChild({
+          field: field + ".map",
+          schema: schema.map,
+        }),
+      })
+      : null;
 
     // schema.event can be a constant (string) or inline function which should generate event names (string[])
     let eventNameOrFn: string | ((args: MappableArgs) => string);
@@ -200,7 +213,7 @@ export const ConnectorCompiler = {
           field: field + ".event",
           schema: schema.event,
         }),
-        returnTypeCheck: value => typeof value === "string" && !!value,
+        returnTypeCheck: (value) => typeof value === "string" && !!value,
         returnTypeNotation: "string",
       });
     } catch (error) {
@@ -210,19 +223,18 @@ export const ConnectorCompiler = {
     // for static event name
     if (typeof eventNameOrFn === "string") {
       const eventName = eventNameOrFn;
-      const policySchemata = integration.schema.policy && Array.isArray(integration.schema.policy.publish)
-        ? integration.schema.policy.publish.filter(policy => policy.events.some(eventNamePattern => broker.matchEventName(eventName, eventNamePattern)))
-        : [];
-      const policyTester = policySchemata.length ? PolicyCompiler.publish(policySchemata, policyPlugins,  integration, {}) : null;
+      const policySchemata =
+        integration.schema.policy && Array.isArray(integration.schema.policy.publish) ? integration.schema.policy.publish.filter((policy) => policy.events.some((eventNamePattern) => broker.matchEventName(eventName, eventNamePattern))) : [];
+      const policyTester = policySchemata.length ? PolicyCompiler.publish(policySchemata, policyPlugins, integration, {}) : null;
 
-      const baseArgs = {event: eventName, groups: schema.groups || [], broadcast: schema.broadcast === true};
+      const baseArgs = { event: eventName, groups: schema.groups || [], broadcast: schema.broadcast === true };
 
       const connector: PublishConnector = async (context, mappableArgs) => {
         // map params
-        const {params} = paramsMapper.map(mappableArgs); // batching disabled
+        const { params } = paramsMapper.map(mappableArgs); // batching disabled
 
         // test policy
-        const args: PublishPolicyArgs = {...baseArgs, context, params};
+        const args: PublishPolicyArgs = { ...baseArgs, context, params };
         if (policyTester && !policyTester(args)) {
           throw new Error("forbidden publish"); // TODO: normalize error
         }
@@ -239,22 +251,20 @@ export const ConnectorCompiler = {
     } else {
       // for dynamic event name
       const getEventName = eventNameOrFn;
-      const policySchemata = integration.schema.policy && Array.isArray(integration.schema.policy.publish)
-        ? integration.schema.policy.publish
-        : [];
-      const baseArgs = {groups: schema.groups || [], broadcast: schema.broadcast === true};
+      const policySchemata = integration.schema.policy && Array.isArray(integration.schema.policy.publish) ? integration.schema.policy.publish : [];
+      const baseArgs = { groups: schema.groups || [], broadcast: schema.broadcast === true };
 
       const connector: PublishConnector = async (context, mappableArgs) => {
         // map params
-        const {params} = paramsMapper.map(mappableArgs); // batching disabled
+        const { params } = paramsMapper.map(mappableArgs); // batching disabled
 
         // get event name
         const eventName = getEventName(mappableArgs);
 
         // test policy
-        const args = {...baseArgs, context, event: eventName, params};
-        const filteredPolicySchemata = policySchemata.filter(policy => policy.events.some(eventNamePattern => broker.matchEventName(eventName, eventNamePattern)));
-        const policyTester = filteredPolicySchemata.length ? PolicyCompiler.publish(filteredPolicySchemata, policyPlugins,  integration, {}) : null;
+        const args = { ...baseArgs, context, event: eventName, params };
+        const filteredPolicySchemata = policySchemata.filter((policy) => policy.events.some((eventNamePattern) => broker.matchEventName(eventName, eventNamePattern)));
+        const policyTester = filteredPolicySchemata.length ? PolicyCompiler.publish(filteredPolicySchemata, policyPlugins, integration, {}) : null;
         if (policyTester && !policyTester(args)) {
           throw new Error("forbidden publish"); // TODO: normalize error
         }
@@ -270,13 +280,13 @@ export const ConnectorCompiler = {
     }
   },
 
-  subscribe<MappableArgs, GetAsyncIterator extends boolean | undefined>(
+  subscribe<MappableArgs extends { [key: string]: any }, GetAsyncIterator extends boolean | undefined>(
     schema: Readonly<SubscribeConnectorSchema>,
     integration: Readonly<ServiceAPIIntegration>,
     policyPlugins: ReadonlyArray<Readonly<PolicyPlugin<any, any>>>,
     opts: {
       mappableKeys: Extract<keyof MappableArgs, string>[];
-      getAsyncIterator?: GetAsyncIterator,
+      getAsyncIterator?: GetAsyncIterator;
     },
   ): SubscribeConnector<MappableArgs, GetAsyncIterator extends true ? null : (packet: any) => void> {
     const broker = integration.service.broker!;
@@ -285,26 +295,30 @@ export const ConnectorCompiler = {
     const field = getPathOfPartialSchema(schema, integration.schema);
 
     // to filter response
-    const responseFilter = schema.filter ? broker.createInlineFunction<SubscribeConnectorResponseMappableArgs, boolean>({
-      function: schema.filter,
-      mappableKeys: ["context", "event", "broadcast", "params"],
-      reporter: integration.reporter.getChild({
-        field: field + ".filter",
-        schema: schema.filter,
-      }),
-      // returnTypeCheck: value => typeof value === "boolean",
-      // returnTypeNotation: "boolean",
-    }) : null;
+    const responseFilter = schema.filter
+      ? broker.createInlineFunction<SubscribeConnectorResponseMappableArgs, boolean>({
+        function: schema.filter,
+        mappableKeys: ["context", "event", "broadcast", "params"],
+        reporter: integration.reporter.getChild({
+          field: field + ".filter",
+          schema: schema.filter,
+        }),
+        // returnTypeCheck: value => typeof value === "boolean",
+        // returnTypeNotation: "boolean",
+      })
+      : null;
 
     // to map response
-    const responseMapper = schema.map ? broker.createInlineFunction<SubscribeConnectorResponseMappableArgs, any>({
-      function: schema.map,
-      mappableKeys: ["context", "event", "broadcast", "params"],
-      reporter: integration.reporter.getChild({
-        field: field + ".map",
-        schema: schema.map,
-      }),
-    }) : null;
+    const responseMapper = schema.map
+      ? broker.createInlineFunction<SubscribeConnectorResponseMappableArgs, any>({
+        function: schema.map,
+        mappableKeys: ["context", "event", "broadcast", "params"],
+        reporter: integration.reporter.getChild({
+          field: field + ".map",
+          schema: schema.map,
+        }),
+      })
+      : null;
 
     // schema.event can be a constant (string) or inline function which should generate event names (string[])
     let eventNamesOrFn: string[] | ((args: MappableArgs) => string[]);
@@ -316,7 +330,7 @@ export const ConnectorCompiler = {
           field: field + ".events",
           schema: schema.events,
         }),
-        returnTypeCheck: value => Array.isArray(value) && value.every(name => typeof name === "string" && name),
+        returnTypeCheck: (value) => Array.isArray(value) && value.every((name) => typeof name === "string" && name),
         returnTypeNotation: "string[]",
       });
     } else {
@@ -330,11 +344,10 @@ export const ConnectorCompiler = {
       const asyncIteratorComposeItems: AsyncIteratorComposeItem<EventPacket>[] = [];
 
       for (const event of eventNames) {
-
         // test policy
-        const filteredPolicySchemata = policySchemata.filter(policy => policy.events.some(eventNamePattern => broker.matchEventName(event, eventNamePattern)));
-        const policyTester = filteredPolicySchemata.length ? PolicyCompiler.subscribe(filteredPolicySchemata, policyPlugins,  integration, {}) : null;
-        const args: SubscribePolicyArgs = {context, event};
+        const filteredPolicySchemata = policySchemata.filter((policy) => policy.events.some((eventNamePattern) => broker.matchEventName(event, eventNamePattern)));
+        const policyTester = filteredPolicySchemata.length ? PolicyCompiler.subscribe(filteredPolicySchemata, policyPlugins, integration, {}) : null;
+        const args: SubscribePolicyArgs = { context, event };
 
         if (policyTester && !policyTester(args)) {
           throw new Error("forbidden subscribe"); // TODO: normalize error
@@ -344,14 +357,13 @@ export const ConnectorCompiler = {
           // create async iterator
           asyncIteratorComposeItems.push({
             iterator: await broker.subscribeEvent(context, event, null),
-            filter: responseFilter ? (packet => responseFilter({context, ...packet})) : undefined,
-            map: responseMapper ? (packet => responseMapper({context, ...packet})) : (packet => packet.params),
+            filter: responseFilter ? (packet) => responseFilter({ context, ...packet }) : undefined,
+            map: responseMapper ? (packet) => responseMapper({ context, ...packet }) : (packet) => packet.params,
           });
-
         } else {
           // or, just subscribe with packet listener
           const handler = (packet: EventPacket) => {
-            const responseArgs = {context, ...packet};
+            const responseArgs = { context, ...packet };
 
             // filter response
             if (responseFilter && !responseFilter(responseArgs)) {
@@ -379,7 +391,7 @@ export const ConnectorCompiler = {
 };
 
 function withLabel<T = any>(connector: T, label: string): T {
-  Object.defineProperty(connector, "name", {value: `${label}`});
+  Object.defineProperty(connector, "name", { value: `${label}` });
   return connector;
 }
 
@@ -390,7 +402,9 @@ function getPathOfPartialSchema(partialSchema: any, schema: object): string {
   }
 
   // alternatively return location
-  const lines = JSON.stringify(schema, null, 2).split(JSON.stringify(partialSchema, null, 2))[0].split("\n");
+  const lines = JSON.stringify(schema, null, 2)
+    .split(JSON.stringify(partialSchema, null, 2))[0]
+    .split("\n");
   const line = lines.length;
   const col = lines[lines.length - 1].length;
   return `${line}:${col}`;

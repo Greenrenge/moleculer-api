@@ -18,7 +18,7 @@ export type LoggingMiddlewareOptions = {
   ref: https://github.com/expressjs/morgan#predefined-formats
 */
 
-morgan.token("ws-protocol", req => {
+morgan.token("ws-protocol", (req) => {
   const protocol = req.headers["sec-websocket-protocol"];
   if (protocol) {
     if (typeof protocol === "string") {
@@ -29,7 +29,7 @@ morgan.token("ws-protocol", req => {
   return "-";
 });
 
-morgan.token("ip", req => {
+morgan.token("ip", (req) => {
   const forwarded = req.headers && (req.headers["x-forwarded-for"] || req.headers["x-forwarded-proto"]);
   if (forwarded) {
     if (typeof forwarded === "string") {
@@ -37,7 +37,7 @@ morgan.token("ip", req => {
     }
     return forwarded[0];
   }
-  return req.connection && req.connection.remoteAddress || "-";
+  return (req.connection && req.connection.remoteAddress) || "-";
 });
 
 morgan.token("statusMessage", (req, res) => {
@@ -59,14 +59,17 @@ export class LoggingMiddleware extends ServerMiddleware {
   };
   private readonly opts: LoggingMiddlewareOptions;
 
-  constructor(protected readonly props: ServerMiddlewareProps, opts?: RecursivePartial<LoggingMiddlewareOptions>) {
+  constructor(
+    protected readonly props: ServerMiddlewareProps,
+    opts?: RecursivePartial<LoggingMiddlewareOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, LoggingMiddleware.autoLoadOptions);
   }
 
   public apply(modules: ServerApplicationComponentModules): void {
     const logger = this.props.logger.getChild(os.hostname(), true);
-    const {httpFormat, wsFormat, level, ...restOpts} = this.opts;
+    const { httpFormat, wsFormat, level, ...restOpts } = this.opts;
     const write = (logger[level] || logger.info).bind(logger);
     const opts = {
       ...restOpts,
@@ -82,8 +85,7 @@ export class LoggingMiddleware extends ServerMiddleware {
     // ws connection logger; be noted that it is a trick
     const wsLogger = morgan(wsFormat, opts);
     modules.ws.on("connection", (socket, req) => {
-      wsLogger(req as any, {} as any, () => {
-      });
+      wsLogger(req as any, {} as any, () => {});
     });
   }
 }

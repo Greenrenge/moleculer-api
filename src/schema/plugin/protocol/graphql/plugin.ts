@@ -29,10 +29,14 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
   private readonly opts: GraphQLProtocolPluginOptions;
 
   private static allowedDefKinds = [
-    "ObjectTypeDefinition", "ObjectTypeExtension",
-    "InterfaceTypeDefinition", "InterfaceTypeExtension",
-    "UnionTypeDefinition", "UnionTypeExtension",
-    "EnumTypeDefinition", "EnumTypeExtension",
+    "ObjectTypeDefinition",
+    "ObjectTypeExtension",
+    "InterfaceTypeDefinition",
+    "InterfaceTypeExtension",
+    "UnionTypeDefinition",
+    "UnionTypeExtension",
+    "EnumTypeDefinition",
+    "EnumTypeExtension",
     "InputObjectTypeDefinition",
   ];
   private static readonly resolverAllowedDefKinds = ["ObjectTypeDefinition", "ObjectTypeExtension"];
@@ -40,21 +44,24 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
   private static readonly isTypeOfFieldName = "__isTypeOf";
   private static readonly forbiddenFieldNames = ["__isTypeOf", "__resolveType", "isTypeOf", "resolveType"];
 
-  constructor(protected readonly props: ProtocolPluginProps, opts?: RecursivePartial<GraphQLProtocolPluginOptions>) {
+  constructor(
+    protected readonly props: ProtocolPluginProps,
+    opts?: RecursivePartial<GraphQLProtocolPluginOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, GraphQLProtocolPlugin.autoLoadOptions);
   }
 
-  public async start(): Promise<void> {
-  }
+  public async start(): Promise<void> {}
 
-  public async stop(): Promise<void> {
-  }
+  public async stop(): Promise<void> {}
 
   public validateSchema(schema: GraphQLProtocolPluginSchema): ValidationError[] {
     const typeDefs: Exclude<TypeDefinitionNode | TypeExtensionNode, ScalarTypeDefinitionNode | ScalarTypeExtensionNode>[] = [];
     let typeDefsString: string = "";
-    const result = validateObject(schema, {
+    const result = validateObject(
+      schema,
+      {
         description: {
           type: "string",
           optional: true,
@@ -67,29 +74,33 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
               try {
                 typeDefsString = value = printGraphQLSchema(value);
               } catch (error) {
-                return [{
-                  field: `typeDefs`,
-                  type: "typeDefsSyntax",
-                  message: error.message,
-                  actual: value,
-                }];
+                return [
+                  {
+                    field: `typeDefs`,
+                    type: "typeDefsSyntax",
+                    message: error.message,
+                    actual: value,
+                  },
+                ];
               }
             }
 
             // parse string
             if (typeof value !== "string") {
-              return [{
-                field: `typeDefs`,
-                type: "typeDefsSyntax",
-                message: "type definitions must be string or valid graphql.DocumentNode",
-                actual: value,
-              }];
+              return [
+                {
+                  field: `typeDefs`,
+                  type: "typeDefsSyntax",
+                  message: "type definitions must be string or valid graphql.DocumentNode",
+                  actual: value,
+                },
+              ];
             }
 
             const errors: ValidationError[] = [];
             try {
               // parse GraphQL Schema
-              const doc = parseGraphQLSchema(value, {noLocation: false});
+              const doc = parseGraphQLSchema(value, { noLocation: false });
               for (const def of doc.definitions) {
                 if (!GraphQLProtocolPlugin.allowedDefKinds.includes(def.kind)) {
                   errors.push({
@@ -105,7 +116,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
               }
             } catch (error) {
               // parsing error
-              const location = error.locations && error.locations[0] || null;
+              const location = (error.locations && error.locations[0]) || null;
               errors.push({
                 field: `typeDefs`,
                 type: "typeDefsSyntax",
@@ -121,29 +132,34 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
           type: "custom",
           check(value: any) {
             if (typeof value !== "object" || value === null) {
-              return [{
-                field: `resolvers`,
-                type: "resolversInvalid",
-                message: "type resolvers should be an object",
-                actual: value,
-              }];
+              return [
+                {
+                  field: `resolvers`,
+                  type: "resolversInvalid",
+                  message: "type resolvers should be an object",
+                  actual: value,
+                },
+              ];
             }
 
             const errors: ValidationError[] = [];
-            const typeDefsByName = typeDefs.reduce((obj, typeDef) => {
-              const typeName = typeDef.name.value;
-              if (!obj[typeName]) {
-                obj[typeName] = [];
-              }
-              obj[typeName].push(typeDef as any);
-              return obj;
-            }, {} as {[name: string]: (ObjectTypeDefinitionNode | ObjectTypeExtensionNode)[]})
+            const typeDefsByName = typeDefs.reduce(
+              (obj, typeDef) => {
+                const typeName = typeDef.name.value;
+                if (!obj[typeName]) {
+                  obj[typeName] = [];
+                }
+                obj[typeName].push(typeDef as any);
+                return obj;
+              },
+              {} as { [name: string]: (ObjectTypeDefinitionNode | ObjectTypeExtensionNode)[] },
+            );
 
             for (const [typeName, partialTypeDefs] of Object.entries(typeDefsByName)) {
               const typeResolver = value[typeName];
 
               // not a type which can have resolver
-              if (!partialTypeDefs.every(def => GraphQLProtocolPlugin.resolverAllowedDefKinds.includes(def.kind))) {
+              if (!partialTypeDefs.every((def) => GraphQLProtocolPlugin.resolverAllowedDefKinds.includes(def.kind))) {
                 // this type should not have resolver
                 if (typeof typeResolver !== "undefined") {
                   errors.push({
@@ -159,11 +175,11 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
 
               const typeFieldNames = partialTypeDefs.reduce((fieldNames, typeDef) => {
                 if (typeDef.fields) {
-                  fieldNames.push(...typeDef.fields.map(f => f.name.value));
+                  fieldNames.push(...typeDef.fields.map((f) => f.name.value));
                 }
                 return fieldNames;
               }, [] as string[]);
-              const typeForbiddenFieldNames = typeFieldNames.filter(f => GraphQLProtocolPlugin.forbiddenFieldNames.includes(f));
+              const typeForbiddenFieldNames = typeFieldNames.filter((f) => GraphQLProtocolPlugin.forbiddenFieldNames.includes(f));
 
               // type has forbidden fields
               if (typeForbiddenFieldNames.length > 0) {
@@ -180,7 +196,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
               // __isTypeOf field resolver is required for interface implementation
               const interfaceNames = partialTypeDefs.reduce((names, typeDef) => {
                 if (typeDef.interfaces) {
-                  names.push(...typeDef.interfaces.map(i => i.name.value));
+                  names.push(...typeDef.interfaces.map((i) => i.name.value));
                 }
                 return names;
               }, [] as string[]);
@@ -333,12 +349,17 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
 
                 // @ts-ignore
                 if (rule) {
-                  errors.push(...validateValue(fieldResolver,
-                    // @ts-ignore
-                    rule, {
-                      strict: true,
-                      field: `resolvers.${typeName}.${fieldName}`,
-                    }));
+                  errors.push(
+                    ...validateValue(
+                      fieldResolver,
+                      // @ts-ignore
+                      rule,
+                      {
+                        strict: true,
+                        field: `resolvers.${typeName}.${fieldName}`,
+                      },
+                    ),
+                  );
                 }
               } // end-of: typeFieldNames for-loop
             } // end-of: typeDefs for-loop
@@ -349,7 +370,8 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
       },
       {
         strict: true,
-      });
+      },
+    );
 
     // convert original typeDefs as string too for human-readable information
     if (typeDefsString) {
@@ -358,8 +380,8 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
     return result;
   }
 
-  public compileSchemata(routeHashMapCache: Readonly<Map<string, Readonly<Route>>>, integrations: Readonly<ServiceAPIIntegration>[], branch: Branch): { hash: string; route: Readonly<Route>; }[] {
-    const items = new Array<{ hash: string, route: Readonly<Route> }>();
+  public compileSchemata(routeHashMapCache: Readonly<Map<string, Readonly<Route>>>, integrations: Readonly<ServiceAPIIntegration>[], branch: Branch): { hash: string; route: Readonly<Route> }[] {
+    const items = new Array<{ hash: string; route: Readonly<Route> }>();
 
     /* calculate integrated hash to fetch cached handlers */
     const hashes: string[] = [];
@@ -379,29 +401,29 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
     const cachedSubscriptionRoute = routeHashMapCache.get(subscriptionRouteHash);
     const cachedPlaygroundRoute = routeHashMapCache.get(playgroundRouteHash);
     if (cachedRoute) {
-      items.push({hash: routeHash, route: cachedRoute});
+      items.push({ hash: routeHash, route: cachedRoute });
 
       // both playground and subscription handlers are optional
       if (cachedSubscriptionRoute) {
-        items.push({hash: subscriptionRouteHash, route: cachedSubscriptionRoute});
+        items.push({ hash: subscriptionRouteHash, route: cachedSubscriptionRoute });
       }
       if (cachedPlaygroundRoute) {
-        items.push({hash: playgroundRouteHash, route: cachedPlaygroundRoute});
+        items.push({ hash: playgroundRouteHash, route: cachedPlaygroundRoute });
       }
 
       return items;
     }
 
     // create new GraphQL routes
-    const {route, subscriptionRoute, playgroundRoute} = this.createGraphQLHandlers(integrations);
-    items.push({hash: routeHash, route});
+    const { route, subscriptionRoute, playgroundRoute } = this.createGraphQLHandlers(integrations);
+    items.push({ hash: routeHash, route });
 
     // both playground and subscription handlers are optional
     if (subscriptionRoute) {
-      items.push({hash: subscriptionRouteHash, route: subscriptionRoute});
+      items.push({ hash: subscriptionRouteHash, route: subscriptionRoute });
     }
     if (playgroundRoute) {
-      items.push({hash: playgroundRouteHash, route: playgroundRoute});
+      items.push({ hash: playgroundRouteHash, route: playgroundRoute });
     }
 
     return items;
@@ -413,7 +435,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
   }
 
   // @throwable
-  private createGraphQLHandlers(integrations: Readonly<ServiceAPIIntegration>[]): { route: Readonly<HTTPRoute>, subscriptionRoute?: Readonly<WebSocketRoute>, playgroundRoute?: Readonly<HTTPRoute> } {
+  private createGraphQLHandlers(integrations: Readonly<ServiceAPIIntegration>[]): { route: Readonly<HTTPRoute>; subscriptionRoute?: Readonly<WebSocketRoute>; playgroundRoute?: Readonly<HTTPRoute> } {
     const typeDefs: string[] = [];
     let resolvers: IResolvers = {};
     for (const integration of integrations) {
@@ -424,10 +446,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
 
     // merge base typeDefs
     if (this.opts.typeDefs) {
-      typeDefs.push(
-        ...(Array.isArray(this.opts.typeDefs) ? this.opts.typeDefs : [this.opts.typeDefs])
-          .map(defs => typeof defs === "string" ? defs : printGraphQLSchema(defs))
-      );
+      typeDefs.push(...(Array.isArray(this.opts.typeDefs) ? this.opts.typeDefs : [this.opts.typeDefs]).map((defs) => (typeof defs === "string" ? defs : printGraphQLSchema(defs))));
     }
 
     const resolversList = [resolvers];
@@ -435,13 +454,16 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
       resolversList.push(...(Array.isArray(this.opts.resolvers) ? this.opts.resolvers : [this.opts.resolvers]));
     }
 
-    const {handler, subscriptionHandler, playgroundHandler} = new GraphQLHandlers((message) => {
-      this.props.logger.error(message);
-    }, {
-      ...this.opts,
-      typeDefs,
-      resolvers: resolversList,
-    });
+    const { handler, subscriptionHandler, playgroundHandler } = new GraphQLHandlers(
+      (message) => {
+        this.props.logger.error(message);
+      },
+      {
+        ...this.opts,
+        typeDefs,
+        resolvers: resolversList,
+      },
+    );
 
     return {
       route: new HTTPRoute({
@@ -450,27 +472,31 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
         description: "GraphQL HTTP operation endpoint",
         handler,
       }),
-      subscriptionRoute: subscriptionHandler ? new WebSocketRoute({
-        path: "/graphql",
-        description: "GraphQL WebSocket operation endpoint",
-        handler: subscriptionHandler,
-      }) : undefined,
-      playgroundRoute: playgroundHandler ? new HTTPRoute({
-        method: "GET",
-        path: "/graphql",
-        description: "GraphQL Playground endpoint",
-        handler: playgroundHandler,
-      }) : undefined,
+      subscriptionRoute: subscriptionHandler
+        ? new WebSocketRoute({
+          path: "/graphql",
+          description: "GraphQL WebSocket operation endpoint",
+          handler: subscriptionHandler,
+        })
+        : undefined,
+      playgroundRoute: playgroundHandler
+        ? new HTTPRoute({
+          method: "GET",
+          path: "/graphql",
+          description: "GraphQL Playground endpoint",
+          handler: playgroundHandler,
+        })
+        : undefined,
     };
   }
 
   private createGraphQLResolvers(resolversSchema: Readonly<GraphQLProtocolResolversSchema>, integration: Readonly<ServiceAPIIntegration>): IResolvers {
     const resolvers: IResolvers = {};
-    const {Query, Mutation, Subscription, ...ObjectTypes} = resolversSchema;
+    const { Query, Mutation, Subscription, ...ObjectTypes } = resolversSchema;
 
     // create query resolver
     if (Query) {
-      const typeResolver = resolvers.Query = {} as IResolverObject;
+      const typeResolver = (resolvers.Query = {} as IResolverObject);
       for (const [fieldName, fieldSchema] of Object.entries(Query)) {
         if (typeof fieldSchema === "string") {
           typeResolver[fieldName] = this.createGraphQLFieldResolverFromMapConnectorSchema(fieldSchema, integration);
@@ -482,7 +508,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
 
     // create mutation resolver
     if (Mutation) {
-      const typeResolver = resolvers.Mutation = {} as IResolverObject;
+      const typeResolver = (resolvers.Mutation = {} as IResolverObject);
       for (const [fieldName, fieldSchema] of Object.entries(Mutation)) {
         if (typeof fieldSchema === "string") {
           typeResolver[fieldName] = this.createGraphQLFieldResolverFromMapConnectorSchema(fieldSchema, integration);
@@ -496,7 +522,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
 
     // create subscription resolver
     if (Subscription) {
-      const typeResolver = resolvers.Subscription = {} as IResolverObject;
+      const typeResolver = (resolvers.Subscription = {} as IResolverObject);
       for (const [fieldName, fieldSchema] of Object.entries(Subscription)) {
         if (fieldSchema && fieldSchema.subscribe) {
           typeResolver[fieldName] = this.createGraphQLFieldResolverFromSubscribeConnectorSchema(fieldSchema, integration);
@@ -506,7 +532,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
 
     // create other object resolvers
     for (const [typeName, ObjectType] of Object.entries(ObjectTypes)) {
-      const typeResolver = resolvers[typeName] = {} as IResolverObject;
+      const typeResolver = (resolvers[typeName] = {} as IResolverObject);
       for (const [fieldName, fieldSchema] of Object.entries(ObjectType)) {
         if (typeof fieldSchema === "string") {
           if (fieldName === GraphQLProtocolPlugin.isTypeOfFieldName) {
@@ -528,7 +554,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
       mappableKeys: ["context", "source", "args", "info"],
     });
 
-    return (source, args, context, info) => mapConnector({context, source, args, info});
+    return (source, args, context, info) => mapConnector({ context, source, args, info });
   }
 
   private createGraphQLIsTypeOfFnFromMapConnectorSchema(schema: GraphQLIsTypeOfFieldResolverSchema, integration: Readonly<ServiceAPIIntegration>): GraphQLIsTypeOfFn<any, any> {
@@ -536,7 +562,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
       mappableKeys: ["context", "source", "info"],
     });
 
-    return (source, context, info) => mapConnector({context, source, info});
+    return (source, context, info) => mapConnector({ context, source, info });
   }
 
   private createGraphQLFieldResolverFromCallConnectorSchema(schema: GraphQLCallableFieldResolverSchema, integration: Readonly<ServiceAPIIntegration>): IFieldResolver<any, any> {
@@ -547,18 +573,17 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
       disableCache: false,
     });
 
-    const {ignoreError} = schema;
+    const { ignoreError } = schema;
 
     return (source, args, context, info) => {
-      const mappableArgs = {source, args, context, info};
-      return callConnector(context, mappableArgs)
-        .catch(error => {
-          if (ignoreError) {
-            return null;
-          } else {
-            throw error;
-          }
-        });
+      const mappableArgs = { source, args, context, info };
+      return callConnector(context, mappableArgs).catch((error) => {
+        if (ignoreError) {
+          return null;
+        } else {
+          throw error;
+        }
+      });
     };
   }
 
@@ -567,7 +592,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
       mappableKeys: ["context", "source", "args", "info"],
     });
 
-    return (source, args, context, info) => publishConnector(context, {context, source, args, info});
+    return (source, args, context, info) => publishConnector(context, { context, source, args, info });
   }
 
   private createGraphQLFieldResolverFromSubscribeConnectorSchema(schema: GraphQLSubscribableFieldResolverSchema, integration: Readonly<ServiceAPIIntegration>): IResolverOptions<any, any> {
@@ -577,7 +602,7 @@ export class GraphQLProtocolPlugin extends ProtocolPlugin<GraphQLProtocolPluginS
     });
 
     return {
-      subscribe: (source, args, context, info) => subscribeConnector(context, {context, source, args, info}, null),
+      subscribe: (source, args, context, info) => subscribeConnector(context, { context, source, args, info }, null),
     };
   }
 }

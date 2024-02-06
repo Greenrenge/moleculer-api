@@ -5,11 +5,11 @@ import { RecursivePartial } from "./ts";
 import { isStream } from "./stream";
 
 type SanitizeObjectOptions = {
-  streamNotation: string,
-  omittedLimit: number,
-  omittedNotation: string,
-  redactedObjectKeyRegExps: RegExp[],
-  redactedNotation: string,
+  streamNotation: string;
+  omittedLimit: number;
+  omittedNotation: string;
+  redactedObjectKeyRegExps: RegExp[];
+  redactedNotation: string;
 };
 
 export function sanitizeObject(obj: any, opts?: RecursivePartial<SanitizeObjectOptions>): any {
@@ -18,13 +18,7 @@ export function sanitizeObject(obj: any, opts?: RecursivePartial<SanitizeObjectO
     omittedNotation: "*OMITTED*",
     omittedLimit: 100,
     redactedNotation: "*REDACTED*",
-    redactedObjectKeyRegExps: [
-      /password/i,
-      /secret/i,
-      /credential/i,
-      /key/i,
-      /token/i,
-    ],
+    redactedObjectKeyRegExps: [/password/i, /secret/i, /credential/i, /key/i, /token/i],
   });
   return recSanitizeObject(removeCircular(_.cloneDeep(obj)), options);
 }
@@ -69,8 +63,8 @@ function recSanitizeObject(obj: any, opts: SanitizeObjectOptions): any {
 }
 
 /*
-* remove ANSI color characters from object or string
-*/
+ * remove ANSI color characters from object or string
+ */
 
 const ANSIColorRegEXP = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
 export function removeANSIColor(message: any): any {
@@ -78,10 +72,10 @@ export function removeANSIColor(message: any): any {
     return message.replace(ANSIColorRegEXP, "");
   } else if (typeof message === "object" && message !== null) {
     if (Array.isArray(message)) {
-      return message.map(value => removeANSIColor(value));
+      return message.map((value) => removeANSIColor(value));
     } else {
       const obj: any = {};
-      for (const [key,value] of Object.entries(message)) {
+      for (const [key, value] of Object.entries(message)) {
         obj[key] = typeof value === "string" ? removeANSIColor(value) : value;
       }
       return obj;

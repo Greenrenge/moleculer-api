@@ -34,10 +34,10 @@ export class BatchingPool {
   }
 
   public setBatchingHandler(key: any, handler: (batchingParamsList: readonly any[]) => Promise<any[]>): void {
-    const loader = new DataLoader<any, any>((batchingParamsList: readonly any[]) => {
-      return handler(batchingParamsList)
-        .then(entries => {
-          return entries.map(entry => {
+    const loader = new DataLoader<any, any>(
+      (batchingParamsList: readonly any[]) => {
+        return handler(batchingParamsList).then((entries) => {
+          return entries.map((entry) => {
             if (this.opts.failedEntryCheck(entry)) {
               // wrap entry as Error, ref: https://github.com/graphql/dataloader/blob/master/src/index.js#L175
               const err = new Error("failed batching entry"); // TODO: normalize error
@@ -50,12 +50,14 @@ export class BatchingPool {
             return entry;
           });
         });
-    }, {
-      batch: true,
-      maxBatchSize: this.opts.entriesLimit,
-      cache: true,
-      cacheKeyFn: this.opts.entryKey,
-    });
+      },
+      {
+        batch: true,
+        maxBatchSize: this.opts.entriesLimit,
+        cache: true,
+        cacheKeyFn: this.opts.entryKey,
+      },
+    );
     this.loaderMap.set(key, loader);
   }
 

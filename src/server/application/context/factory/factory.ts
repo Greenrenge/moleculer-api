@@ -10,7 +10,10 @@ export type APIRequestContextFactoryProps = {
 };
 
 export abstract class APIRequestContextFactory<T> extends Pluggable {
-  constructor(protected readonly props: APIRequestContextFactoryProps, opts?: any) {
+  constructor(
+    protected readonly props: APIRequestContextFactoryProps,
+    opts?: any,
+  ) {
     super();
   }
 

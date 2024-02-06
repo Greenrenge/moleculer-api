@@ -12,7 +12,7 @@ export type InlineFunctionProps<Args, Return> = {
 };
 
 export type InlineFunctionOptions = {
-  util: {[key: string]: any};
+  util: { [key: string]: any };
 };
 
 interface PartialConsole {
@@ -50,7 +50,7 @@ class DummyConsole implements PartialConsole {
   }
 }
 
-export function createInlineFunction<Args extends {[key: string]: any}, Return = any>(props: InlineFunctionProps<Args, Return>, opts?: RecursivePartial<InlineFunctionOptions>): (args: Args) => Return {
+export function createInlineFunction<Args extends { [key: string]: any }, Return = any>(props: InlineFunctionProps<Args, Return>, opts?: RecursivePartial<InlineFunctionOptions>): (args: Args) => Return {
   if (!validateInlineFunction(props.function)) {
     throw new Error("not a valid inline function"); // TODO: normalize error
   }
@@ -62,12 +62,12 @@ export function createInlineFunction<Args extends {[key: string]: any}, Return =
 
   const sandbox = {
     console: new DummyConsole(props.reporter),
-    util: opts && opts.util || {},
+    util: (opts && opts.util) || {},
     ...tslib,
   };
 
   return (args: Args): Return => {
-    const value = script.runInNewContext({...sandbox, ...args});
+    const value = script.runInNewContext({ ...sandbox, ...args });
     if (props.returnTypeCheck && !props.returnTypeCheck(value)) {
       const error: any = new Error("return value of inline function has invalid type"); // TODO: normalize error
       if (props.returnTypeNotation) {

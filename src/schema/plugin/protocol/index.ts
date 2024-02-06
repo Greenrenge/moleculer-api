@@ -17,9 +17,9 @@ export const ProtocolPluginConstructors = {
 };
 
 export type ProtocolPluginConstructorOptions = {
-  [GraphQLProtocolPlugin.key]: RecursivePartial<GraphQLProtocolPluginOptions> | false,
-  [RESTProtocolPlugin.key]: RecursivePartial<RESTProtocolPluginOptions> | false,
-  [WebSocketProtocolPlugin.key]: RecursivePartial<WebSocketProtocolPluginOptions> | false,
+  [GraphQLProtocolPlugin.key]: RecursivePartial<GraphQLProtocolPluginOptions> | false;
+  [RESTProtocolPlugin.key]: RecursivePartial<RESTProtocolPluginOptions> | false;
+  [WebSocketProtocolPlugin.key]: RecursivePartial<WebSocketProtocolPluginOptions> | false;
 };
 
 export const defaultProtocolPluginConstructorOptions: ProtocolPluginConstructorOptions = {
@@ -28,6 +28,6 @@ export const defaultProtocolPluginConstructorOptions: ProtocolPluginConstructorO
   [WebSocketProtocolPlugin.key]: WebSocketProtocolPlugin.autoLoadOptions,
 };
 
-export type ProtocolSchema = { [key in keyof (typeof ProtocolPluginConstructors)]?: InstanceType<(typeof ProtocolPluginConstructors)[key]> extends ProtocolPlugin<infer Schema, any> ? Schema : never };
+export type ProtocolSchema = { [key in keyof typeof ProtocolPluginConstructors]?: InstanceType<(typeof ProtocolPluginConstructors)[key]> extends ProtocolPlugin<infer Schema, any> ? Schema : never };
 
-export type ProtocolCatalog = { [key in keyof (typeof ProtocolPluginConstructors)]?: InstanceType<(typeof ProtocolPluginConstructors)[key]> extends ProtocolPlugin<any, infer Catalog> ? Catalog : never };
+export type ProtocolCatalog = { [key in keyof typeof ProtocolPluginConstructors]?: InstanceType<(typeof ProtocolPluginConstructors)[key]> extends ProtocolPlugin<any, infer Catalog> ? Catalog : never };

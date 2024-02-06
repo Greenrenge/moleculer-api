@@ -5,7 +5,7 @@ import { ServerMiddleware, ServerMiddlewareProps } from "./middleware";
 
 export type ErrorMiddlewareOptions = {
   displayErrorStack: boolean;
-  responseFormat: (obj: any) => { status?: number, statusCode?: number, code?: number|string, [key:string]: any };
+  responseFormat: (obj: any) => { status?: number; statusCode?: number; code?: number | string; [key: string]: any };
 };
 
 /*
@@ -19,7 +19,10 @@ export class ErrorMiddleware extends ServerMiddleware {
   };
   private readonly opts: ErrorMiddlewareOptions;
 
-  constructor(protected readonly props: ServerMiddlewareProps, opts?: RecursivePartial<ErrorMiddlewareOptions>) {
+  constructor(
+    protected readonly props: ServerMiddlewareProps,
+    opts?: RecursivePartial<ErrorMiddlewareOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, ErrorMiddleware.autoLoadOptions);
   }
@@ -63,7 +66,7 @@ export class ErrorMiddleware extends ServerMiddleware {
     }
 
     const err = this.formatError(error);
-    let status = typeof err !== "string" && err.error && (err.error.status || err.error.statusCode || err.error.code) || 500;
+    let status = (typeof err !== "string" && err.error && (err.error.status || err.error.statusCode || err.error.code)) || 500;
     if (isNaN(status)) status = 500;
     res.status(status).json(err); // TODO: normalize error
   }
@@ -79,7 +82,7 @@ export class ErrorMiddleware extends ServerMiddleware {
   }
 
   private formatError(error: any, stringify = false): { error: any } | string {
-    const {responseFormat, displayErrorStack} = this.opts;
+    const { responseFormat, displayErrorStack } = this.opts;
     let value: any = error;
     if (typeof error === "object" && error !== null) {
       const obj: any = {};
@@ -99,14 +102,14 @@ export class ErrorMiddleware extends ServerMiddleware {
       }
     }
 
-    let result: any = {error: value};
+    let result: any = { error: value };
 
     if (stringify) {
       try {
         result = JSON.stringify(result);
       } catch (e) {
         console.error("failed to stringify error", e);
-        result = JSON.stringify({error: error.toString(), truncated: true});
+        result = JSON.stringify({ error: error.toString(), truncated: true });
       }
     }
 

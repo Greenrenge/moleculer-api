@@ -6,7 +6,7 @@ export const ConnectorDescriber = {
     return {
       type: "call",
       map: null,
-      status: () => ({message: "TODO", code: 123, updatedAt: new Date()}),
+      status: () => ({ message: "TODO", code: 123, updatedAt: new Date() }),
       policies: [],
       action: "test",
       params: {},

@@ -19,7 +19,7 @@ export function createMoleculerServiceSchema(props: ServiceBrokerDelegatorProps)
         }
 
         const params = ctx.params;
-        const groups = ctx.eventGroups ? (Array.isArray(ctx.eventGroups) ? ctx.eventGroups : [ctx.eventGroups]) : (ctx.eventType === "broadcastLocal" ? [serviceName] : []);
+        const groups = ctx.eventGroups ? (Array.isArray(ctx.eventGroups) ? ctx.eventGroups : [ctx.eventGroups]) : ctx.eventType === "broadcastLocal" ? [serviceName] : [];
         const broadcast = ctx.eventType === "broadcast";
 
         let from;
@@ -30,7 +30,7 @@ export function createMoleculerServiceSchema(props: ServiceBrokerDelegatorProps)
         }
 
         // broker event
-        props.emitEvent({event, params, groups, broadcast, from});
+        props.emitEvent({ event, params, groups, broadcast, from });
       },
 
       /* service discovery */

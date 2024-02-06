@@ -18,14 +18,17 @@ export class IPContextFactory extends APIRequestContextFactory<string | undefine
 
   private readonly opts: IPContextFactoryOptions;
 
-  constructor(protected readonly props: APIRequestContextFactoryProps, opts?: RecursivePartial<IPContextFactoryOptions>) {
+  constructor(
+    protected readonly props: APIRequestContextFactoryProps,
+    opts?: RecursivePartial<IPContextFactoryOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, IPContextFactory.autoLoadOptions);
     this.opts.forwardedHeaderName = this.opts.forwardedHeaderName.toLowerCase();
   }
 
   public create(source: APIRequestContextSource) {
-    const {forwardedHeaderName} = this.opts;
+    const { forwardedHeaderName } = this.opts;
     if (typeof source.headers[forwardedHeaderName] === "string") {
       return source.headers[forwardedHeaderName] as string;
     }

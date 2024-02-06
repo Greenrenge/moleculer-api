@@ -17,9 +17,9 @@ export const PolicyPluginConstructors = {
 };
 
 export type PolicyPluginConstructorOptions = {
-  [FilterPolicyPlugin.key]: RecursivePartial<FilterPolicyPluginOptions> | false,
-  [ScopePolicyPlugin.key]: RecursivePartial<ScopePolicyPluginOptions> | false,
-  [ProtectPolicyPlugin.key]: RecursivePartial<ProtectPolicyPluginOptions> | false,
+  [FilterPolicyPlugin.key]: RecursivePartial<FilterPolicyPluginOptions> | false;
+  [ScopePolicyPlugin.key]: RecursivePartial<ScopePolicyPluginOptions> | false;
+  [ProtectPolicyPlugin.key]: RecursivePartial<ProtectPolicyPluginOptions> | false;
 };
 
 export const defaultPolicyPluginConstructorOptions: PolicyPluginConstructorOptions = {
@@ -28,7 +28,7 @@ export const defaultPolicyPluginConstructorOptions: PolicyPluginConstructorOptio
   [ProtectPolicyPlugin.key]: ProtectPolicyPlugin.autoLoadOptions,
 };
 
-export type PolicySchemaPluginProps = { [key in keyof (typeof PolicyPluginConstructors)]?: InstanceType<(typeof PolicyPluginConstructors)[key]> extends PolicyPlugin<infer Schema, any> ? Schema : never };
+export type PolicySchemaPluginProps = { [key in keyof typeof PolicyPluginConstructors]?: InstanceType<(typeof PolicyPluginConstructors)[key]> extends PolicyPlugin<infer Schema, any> ? Schema : never };
 
 export type PolicySchema = {
   call?: (CallPolicySchema & PolicySchemaPluginProps)[];
@@ -36,4 +36,4 @@ export type PolicySchema = {
   subscribe?: (SubscribePolicySchema & PolicySchemaPluginProps)[];
 };
 
-export type PolicyCatalog = { [key in keyof (typeof PolicyPluginConstructors)]?: InstanceType<(typeof PolicyPluginConstructors)[key]> extends PolicyPlugin<any, infer Catalog> ? Catalog : never };
+export type PolicyCatalog = { [key in keyof typeof PolicyPluginConstructors]?: InstanceType<(typeof PolicyPluginConstructors)[key]> extends PolicyPlugin<any, infer Catalog> ? Catalog : never };

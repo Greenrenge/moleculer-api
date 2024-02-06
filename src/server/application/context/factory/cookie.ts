@@ -20,19 +20,22 @@ export class CookieContextFactory extends APIRequestContextFactory<{ [key: strin
   };
   private readonly opts: CookieContextFactoryOptions;
 
-  constructor(protected readonly props: APIRequestContextFactoryProps, opts?: RecursivePartial<CookieContextFactoryOptions>) {
+  constructor(
+    protected readonly props: APIRequestContextFactoryProps,
+    opts?: RecursivePartial<CookieContextFactoryOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, CookieContextFactory.autoLoadOptions);
-    const {secrets} = this.opts;
-    this.opts.secrets = !secrets || Array.isArray(secrets) ? (secrets || []) : [secrets];
+    const { secrets } = this.opts;
+    this.opts.secrets = !secrets || Array.isArray(secrets) ? secrets || [] : [secrets];
   }
 
-  public create({headers}: APIRequestContextSource) {
+  public create({ headers }: APIRequestContextSource) {
     if (!headers.cookie) {
       return {};
     }
 
-    const {secrets, ...parseOptions} = this.opts;
+    const { secrets, ...parseOptions } = this.opts;
     const cookies = parseCookieString(headers.cookie, parseOptions);
 
     // parse signed cookies

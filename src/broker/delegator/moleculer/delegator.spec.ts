@@ -18,7 +18,7 @@ describe("moleculer service broker test", () => {
   });
 
   it("broker can health check subscription", () => {
-    return expect(broker.healthCheckSubscribe()).resolves.toMatchObject({code: 200});
+    return expect(broker.healthCheckSubscribe()).resolves.toMatchObject({ code: 200 });
   });
 
   it("broker should not discovered anything yet", () => {

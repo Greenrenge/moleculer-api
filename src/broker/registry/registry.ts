@@ -14,10 +14,10 @@ export type ServiceRegistryOptions = {
     queueLimit: number;
     limitPerActions: number;
     limitPerEvents: number;
-    streamNotation: string,
-    omittedNotation: string,
-    omittedLimit: number,
-    redactedNotation: string,
+    streamNotation: string;
+    omittedNotation: string;
+    omittedLimit: number;
+    redactedNotation: string;
     redactedParamNameRegExps: RegExp[];
   };
   healthCheck: {
@@ -26,12 +26,15 @@ export type ServiceRegistryOptions = {
 };
 
 export class ServiceRegistry {
-  private readonly actionExamplesQueue: { serviceHash: string, actionId: string, params: any, response: any }[] = [];
-  private readonly eventExamplesQueue: { events: string[], packet: EventPacket }[] = [];
+  private readonly actionExamplesQueue: { serviceHash: string; actionId: string; params: any; response: any }[] = [];
+  private readonly eventExamplesQueue: { events: string[]; packet: EventPacket }[] = [];
   private readonly serviceHashMap = new Map<string, Readonly<Service>>();
   private readonly opts: ServiceRegistryOptions;
 
-  constructor(protected readonly props: ServiceRegistryProps, opts?: RecursivePartial<ServiceRegistryOptions>) {
+  constructor(
+    protected readonly props: ServiceRegistryProps,
+    opts?: RecursivePartial<ServiceRegistryOptions>,
+  ) {
     this.opts = _.defaultsDeep(opts || {}, {
       examples: {
         processIntervalSeconds: 5,
@@ -42,13 +45,7 @@ export class ServiceRegistry {
         omittedNotation: "*OMITTED*",
         omittedLimit: 100,
         redactedNotation: "*REDACTED*",
-        redactedParamNameRegExps: [
-          /password/i,
-          /secret/i,
-          /credential/i,
-          /key/i,
-          /token/i,
-        ],
+        redactedParamNameRegExps: [/password/i, /secret/i, /credential/i, /key/i, /token/i],
       },
       healthCheck: {
         intervalSeconds: 10,
@@ -72,27 +69,27 @@ export class ServiceRegistry {
     return Array.from(this.serviceHashMap.values());
   }
 
-  public addActionExample(args: { action: Readonly<ServiceAction>, params: any, response: any }): void {
+  public addActionExample(args: { action: Readonly<ServiceAction>; params: any; response: any }): void {
     if (this.actionExamplesQueue.length > this.opts.examples.queueLimit) {
       return;
     }
-    const {params, response} = args;
-    this.actionExamplesQueue.push({serviceHash: args.action.service.hash, actionId: args.action.id, params, response});
+    const { params, response } = args;
+    this.actionExamplesQueue.push({ serviceHash: args.action.service.hash, actionId: args.action.id, params, response });
   }
 
   public addEventExample(events: string[], packet: EventPacket): void {
     if (this.eventExamplesQueue.length > this.opts.examples.queueLimit) {
       return;
     }
-    this.eventExamplesQueue.push({events, packet});
+    this.eventExamplesQueue.push({ events, packet });
   }
 
   private consumeExamplesQueues(): void {
     const actionExamples = this.actionExamplesQueue.splice(0);
     const eventExamples = this.eventExamplesQueue.splice(0);
 
-    for (const {serviceHash, actionId, params, response} of actionExamples) {
-      const example = {params: this.sanitizeObject(params), response: this.sanitizeObject(response)};
+    for (const { serviceHash, actionId, params, response } of actionExamples) {
+      const example = { params: this.sanitizeObject(params), response: this.sanitizeObject(response) };
       const service = this.serviceHashMap.get(serviceHash);
       if (service) {
         for (const [id, act] of service.actionMap) {
@@ -104,8 +101,8 @@ export class ServiceRegistry {
       }
     }
 
-    for (const {events, packet} of eventExamples) {
-      const example = {...packet, params: this.sanitizeObject(packet.params)};
+    for (const { events, packet } of eventExamples) {
+      const example = { ...packet, params: this.sanitizeObject(packet.params) };
       for (const svc of this.serviceHashMap.values()) {
         for (const evt of svc.subscribedEvents) {
           if (events.includes(evt.id) && (example.groups == null || example.groups.includes(evt.group))) {
@@ -135,7 +132,7 @@ export class ServiceRegistry {
     }
     this.healthChecking = true;
     try {
-      await Promise.all(this.services.map(service => service.healthCheck()));
+      await Promise.all(this.services.map((service) => service.healthCheck()));
     } catch (error) {
       this.props.logger.error(error);
     } finally {

@@ -11,14 +11,14 @@ const moleculer = {
 };
 
 const schema = getSchemaRegistry({
-  logger: {level: "error", label: "gateway"},
-  delegator: {moleculer: {...moleculer, nodeID: "gateway"}},
+  logger: { level: "error", label: "gateway" },
+  delegator: { moleculer: { ...moleculer, nodeID: "gateway" } },
 });
 
 /* noted: moleculer TCP transporter not work between brokers with same nodeID */
 const remote1 = getMoleculerServiceBroker({
-  logger: {level: "error", label: "remote"},
-  moleculer: {...moleculer, nodeID: "remote"},
+  logger: { level: "error", label: "remote" },
+  moleculer: { ...moleculer, nodeID: "remote" },
   services: [
     MoleculerServiceSchemaFactory.echo("master", "master-a"),
     MoleculerServiceSchemaFactory.echo("master", "master-b"),
@@ -28,8 +28,8 @@ const remote1 = getMoleculerServiceBroker({
 });
 
 const remote2 = getMoleculerServiceBroker({
-  logger: {level: "error", label: "remote2"},
-  moleculer: {...moleculer, nodeID: "remote2"},
+  logger: { level: "error", label: "remote2" },
+  moleculer: { ...moleculer, nodeID: "remote2" },
   services: [
     MoleculerServiceSchemaFactory.echo(null, "non-branched"),
     MoleculerServiceSchemaFactory.echo("dev", "conflict-a", {
@@ -72,33 +72,26 @@ beforeAll(async () => {
     remote1.start(),
     remote2.start(),
     schema.start({
-      updated: branch => mocks[branch.name as "dev" | "master"](),
+      updated: (branch) => mocks[branch.name as "dev" | "master"](),
       removed: jest.fn(),
     }),
   ]);
   await sleepUntil(() => {
     const dev = schema.getBranch("dev");
-    return dev && dev.services.length >= 7 || false;
+    return (dev && dev.services.length >= 7) || false;
   });
 });
 
 describe("Schema registry update", () => {
   it("master branch should gathered master/non-branched services", () => {
-    const serviceIds = schema.getBranch("master")!.services.map(s => s.id);
-    expect(serviceIds).toEqual(expect.arrayContaining([
-      "master-a", "master-b", "master-c",
-      "conflict-a", "non-branched",
-    ]));
+    const serviceIds = schema.getBranch("master")!.services.map((s) => s.id);
+    expect(serviceIds).toEqual(expect.arrayContaining(["master-a", "master-b", "master-c", "conflict-a", "non-branched"]));
     expect(serviceIds).toHaveLength(5);
   });
 
   it("dev should gathered master/dev/non-branched services", () => {
-    const serviceIds = schema.getBranch("dev")!.services.map(s => s.id);
-    expect(serviceIds)
-      .toEqual(expect.arrayContaining([
-        "master-a", "master-b", "master-c",
-        "conflict-a", "conflict-a", "non-branched", "dev-a",
-      ]));
+    const serviceIds = schema.getBranch("dev")!.services.map((s) => s.id);
+    expect(serviceIds).toEqual(expect.arrayContaining(["master-a", "master-b", "master-c", "conflict-a", "conflict-a", "non-branched", "dev-a"]));
     expect(serviceIds).toHaveLength(7);
   });
 
@@ -111,24 +104,22 @@ describe("Schema registry update", () => {
     expect(mocks.dev.mock.calls.length).toBeGreaterThanOrEqual(3); // min: forked(+a +b +c +conflict-a/master) +dev-a +conflict-a/dev
     expect(mocks.dev.mock.calls.length).toBeLessThanOrEqual(8); // max: forked() +a +b +c +conflict-a/master +dev-a +conflict-a/dev
     const routes = schema.getBranch("dev")!.latestVersion.routes;
-    expect(routes).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        method: "POST",
-        path: "/conflict-a/blablabla",
-      }),
-      expect.objectContaining({
-        method: "GET",
-        path: "/conflict-a/blublublu",
-      }),
-    ]));
+    expect(routes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          method: "POST",
+          path: "/conflict-a/blablabla",
+        }),
+        expect.objectContaining({
+          method: "GET",
+          path: "/conflict-a/blublublu",
+        }),
+      ]),
+    );
     expect(routes).toHaveLength(10); // a,b,c, conflict-a/dev = 2, dev-a + graphql(3) + introspection
   });
 });
 
 afterAll(async () => {
-  await Promise.all([
-    schema.stop(),
-    remote1.stop(),
-    remote2.stop(),
-  ]);
+  await Promise.all([schema.stop(), remote1.stop(), remote2.stop()]);
 });

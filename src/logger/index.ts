@@ -8,10 +8,12 @@ export const LoggerConstructors = {
   // [OtherLogger.key]: OtherLogger,
 };
 
-export type LoggerConstructorOptions = {
-  [WinstonLogger.key]: WinstonLoggerOptions;
-}/* | {
+export type LoggerConstructorOptions =
+  | {
+      [WinstonLogger.key]: WinstonLoggerOptions;
+    } /* | {
   [OtherLogger.key]: OtherLoggerOptions;
-}*/ | {
-  [key: string]: never;
-};
+}*/
+  | {
+      [key: string]: never;
+    };

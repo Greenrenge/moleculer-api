@@ -18,19 +18,22 @@ export const createAuthContextOIDCParser = (opts: AuthContextOIDCParserOptions):
 
   function discoverIssuer() {
     Issuer.discover(opts.issuer)
-      .then(result => {
+      .then((result) => {
         oidcIssuer = result;
         discoverError = undefined;
-        oidcClient = new oidcIssuer.Client({client_id: opts.client_id, client_secret: opts.client_secret});
+        oidcClient = new oidcIssuer.Client({ client_id: opts.client_id, client_secret: opts.client_secret });
       })
-      .catch(err => {
+      .catch((err) => {
         discoverError = err;
       });
 
     // refresh issuer info for every 5min
-    setTimeout(() => {
-      discoverIssuer();
-    }, 1000 * 60 * 5);
+    setTimeout(
+      () => {
+        discoverIssuer();
+      },
+      1000 * 60 * 5,
+    );
   }
 
   discoverIssuer();
@@ -47,8 +50,9 @@ export const createAuthContextOIDCParser = (opts: AuthContextOIDCParserOptions):
 
     // get identity
     if (token && token.scheme === "Bearer" && typeof token.token === "string") {
-      await oidcClient.userinfo(token.token)
-        .then(res => {
+      await oidcClient
+        .userinfo(token.token)
+        .then((res) => {
           if (res) {
             if (res.sub) {
               identity = res;
@@ -58,7 +62,7 @@ export const createAuthContextOIDCParser = (opts: AuthContextOIDCParserOptions):
             }
           }
         })
-        .catch(error => {
+        .catch((error) => {
           const err: any = new Error(error.message); // TODO: normalize error
           error.statusCode = 401;
           err.statusCode = 401;
@@ -69,14 +73,15 @@ export const createAuthContextOIDCParser = (opts: AuthContextOIDCParserOptions):
 
     // get client and scope
     if (token && token.scheme === "Bearer" && typeof token.token === "string") {
-      await oidcClient.introspect(token.token)
-        .then(res => {
+      await oidcClient
+        .introspect(token.token)
+        .then((res) => {
           // console.log(res);
           client = res.client_id;
           scope = res.scope.split(" ");
           maxAge = Math.floor(1577791463 * 1000 - new Date().getTime());
         })
-        .catch(error => {
+        .catch((error) => {
           const err: any = new Error(error.message); // TODO: normalize error
           error.statusCode = 401;
           err.code = 401;
@@ -84,6 +89,6 @@ export const createAuthContextOIDCParser = (opts: AuthContextOIDCParserOptions):
         });
     }
 
-    return {identity, scope, client, maxAge};
+    return { identity, scope, client, maxAge };
   };
 };

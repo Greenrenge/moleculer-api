@@ -7,14 +7,14 @@ import { APIServer, APIServerOptions } from "./server";
 import { Logger, LoggerConstructors, LoggerConstructorOptions } from "./logger";
 
 export type APIGatewayOptions = {
-  brokers?: RecursivePartial<ServiceBrokerOptions>[],
-  schema?: RecursivePartial<SchemaRegistryOptions>,
-  server?: RecursivePartial<APIServerOptions>,
-  logger?: LoggerConstructorOptions,
+  brokers?: RecursivePartial<ServiceBrokerOptions>[];
+  schema?: RecursivePartial<SchemaRegistryOptions>;
+  server?: RecursivePartial<APIServerOptions>;
+  logger?: LoggerConstructorOptions;
 } & RecursivePartial<APIGatewayOwnOptions>;
 
 type APIGatewayOwnOptions = {
-  skipProcessEventRegistration?: boolean,
+  skipProcessEventRegistration?: boolean;
 };
 
 export class APIGateway {
@@ -25,7 +25,7 @@ export class APIGateway {
   private readonly opts: APIGatewayOwnOptions;
 
   constructor(opts?: APIGatewayOptions) {
-    const {brokers, schema, server, logger, ...ownOpts} = opts || {};
+    const { brokers, schema, server, logger, ...ownOpts } = opts || {};
 
     // arrange own options
     this.opts = _.defaultsDeep(ownOpts, {
@@ -34,13 +34,13 @@ export class APIGateway {
 
     // create logger
     const loggerKeys = Object.keys(LoggerConstructors);
-    let loggerKey = logger && loggerKeys.find(type => !!logger[type as keyof LoggerConstructorOptions]);
+    let loggerKey = logger && loggerKeys.find((type) => !!logger[type as keyof LoggerConstructorOptions]);
     if (!loggerKey) {
       loggerKey = loggerKeys[0];
     }
-    const loggerOpts = logger && logger[loggerKey as keyof LoggerConstructorOptions] || {};
+    const loggerOpts = (logger && logger[loggerKey as keyof LoggerConstructorOptions]) || {};
     const loggerConstructor = LoggerConstructors[loggerKey as keyof LoggerConstructorOptions];
-    this.logger = new loggerConstructor({label: os.hostname()}, loggerOpts);
+    this.logger = new loggerConstructor({ label: os.hostname() }, loggerOpts);
 
     // create brokers
     const brokerOptionsList = brokers || [];
@@ -51,27 +51,36 @@ export class APIGateway {
       });
     }
     this.brokers = brokerOptionsList.map((brokerOpts, index) => {
-      return new ServiceBroker({
-        id: index.toString(),
-        logger: this.logger.getChild(`broker[${index}]`),
-      }, brokerOpts);
+      return new ServiceBroker(
+        {
+          id: index.toString(),
+          logger: this.logger.getChild(`broker[${index}]`),
+        },
+        brokerOpts,
+      );
     });
 
     // create schema registry
-    this.schema = new SchemaRegistry({
-      brokers: this.brokers,
-      logger: this.logger.getChild(`schema`),
-    }, schema);
+    this.schema = new SchemaRegistry(
+      {
+        brokers: this.brokers,
+        logger: this.logger.getChild(`schema`),
+      },
+      schema,
+    );
 
     // create server
-    this.server = new APIServer({
-      schema: this.schema,
-      logger: this.logger.getChild(`server`),
-    }, server);
+    this.server = new APIServer(
+      {
+        schema: this.schema,
+        logger: this.logger.getChild(`server`),
+      },
+      server,
+    );
   }
 
   public get delegatedBrokers() {
-    return this.brokers.map(b => b.delegatedBroker);
+    return this.brokers.map((b) => b.delegatedBroker);
   }
 
   public async start() {
@@ -111,7 +120,8 @@ export class APIGateway {
 
   private handleUncaughtError = ((reason: any, ...args: any[]) => {
     console.error("uncaught error:", reason, ...args);
-    if (reason instanceof FatalError) { // TODO: normalize error
+    if (reason instanceof FatalError) {
+      // TODO: normalize error
       return this.stop();
     }
   }).bind(this);

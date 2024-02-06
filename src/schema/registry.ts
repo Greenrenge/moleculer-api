@@ -11,17 +11,17 @@ import { ProtocolPlugin, PolicyPlugin, SchemaPluginConstructors, SchemaPluginCon
 import { CallPolicySchema, PublishPolicySchema, SubscribePolicySchema } from "./plugin/connector";
 
 export type SchemaRegistryProps = {
-  brokers: Readonly<ServiceBroker>[],
-  logger: Logger,
+  brokers: Readonly<ServiceBroker>[];
+  logger: Logger;
 };
 
 export type SchemaRegistryOptions = {
-  branch: BranchOptions,
+  branch: BranchOptions;
 } & SchemaPluginConstructorOptions;
 
 export type SchemaRegistryListeners = {
-  updated: (branch: Branch) => void,
-  removed: (branch: Branch) => void,
+  updated: (branch: Branch) => void;
+  removed: (branch: Branch) => void;
 };
 
 export class SchemaRegistry {
@@ -30,21 +30,24 @@ export class SchemaRegistry {
     Removed: "removed",
   };
   private readonly plugin: {
-    protocol: ProtocolPlugin<any, any>[],
-    policy: PolicyPlugin<any, any>[],
+    protocol: ProtocolPlugin<any, any>[];
+    policy: PolicyPlugin<any, any>[];
   };
   private readonly branchMap = new Map<string, Branch>();
   private readonly branchOptions?: RecursivePartial<BranchOptions>;
   private readonly emitter = new EventEmitter().setMaxListeners(1);
 
-  constructor(protected props: SchemaRegistryProps, opts?: RecursivePartial<SchemaRegistryOptions>) {
+  constructor(
+    protected props: SchemaRegistryProps,
+    opts?: RecursivePartial<SchemaRegistryOptions>,
+  ) {
     // adjust options
     this.branchOptions = opts && opts.branch;
     const { protocol = {}, policy = {} } = opts || {};
-    const pluginConstructorOptions: SchemaPluginConstructorOptions = _.defaultsDeep({protocol, policy}, defaultSchemaPluginConstructorOptions);
+    const pluginConstructorOptions: SchemaPluginConstructorOptions = _.defaultsDeep({ protocol, policy }, defaultSchemaPluginConstructorOptions);
 
     // initiate all plugins
-    this.plugin = {protocol: [], policy: []};
+    this.plugin = { protocol: [], policy: [] };
 
     for (const [pluginKey, pluginOptions] of Object.entries(pluginConstructorOptions.policy)) {
       if (pluginOptions === false) {
@@ -54,9 +57,14 @@ export class SchemaRegistry {
       if (!PluginConstructor) {
         continue;
       }
-      this.plugin.policy.push(new PluginConstructor({
-        logger: this.props.logger.getChild(`policy/${pluginKey}`),
-      }, pluginOptions));
+      this.plugin.policy.push(
+        new PluginConstructor(
+          {
+            logger: this.props.logger.getChild(`policy/${pluginKey}`),
+          },
+          pluginOptions,
+        ),
+      );
     }
 
     for (const [pluginKey, pluginOptions] of Object.entries(pluginConstructorOptions.protocol)) {
@@ -67,16 +75,20 @@ export class SchemaRegistry {
       if (!PluginConstructor) {
         continue;
       }
-      this.plugin.protocol.push(new PluginConstructor({
-        logger: this.props.logger.getChild(`protocol/${pluginKey}`),
-        policyPlugins: this.plugin.policy,
-      }, pluginOptions ? pluginOptions : undefined));
+      this.plugin.protocol.push(
+        new PluginConstructor(
+          {
+            logger: this.props.logger.getChild(`protocol/${pluginKey}`),
+            policyPlugins: this.plugin.policy,
+          },
+          pluginOptions ? pluginOptions : undefined,
+        ),
+      );
     }
   }
 
   /* registry lifecycle */
   public async start(listeners: SchemaRegistryListeners): Promise<void> {
-
     // start plugins
     for (const plugin of this.plugin.policy) {
       await plugin.start();
@@ -137,63 +149,64 @@ export class SchemaRegistry {
   }
 
   /* service discovery */
-  private lock = new AsyncLock({maxPending: 1000, timeout: 30 * 1000});
+  private lock = new AsyncLock({ maxPending: 1000, timeout: 30 * 1000 });
   private serviceReporterMap = new Map<Readonly<Service>, Reporter>();
 
   private serviceConnected(service: Readonly<Service>): void {
-    this.lock.acquire("discovery", async () => {
-      this.props.logger.info(`${service} service has been connected`);
+    this.lock
+      .acquire("discovery", async () => {
+        this.props.logger.info(`${service} service has been connected`);
 
-      const reporter = service.broker!.createReporter(service);
-      this.serviceReporterMap.set(service, reporter);
+        const reporter = service.broker!.createReporter(service);
+        this.serviceReporterMap.set(service, reporter);
 
-      let integration: ServiceAPIIntegrationSource | null = null;
-      const meta = service.meta as ServiceMetaDataSchema | null;
+        let integration: ServiceAPIIntegrationSource | null = null;
+        const meta = service.meta as ServiceMetaDataSchema | null;
 
-      // if has published service API
-      if (meta && meta.api) {
+        // if has published service API
+        if (meta && meta.api) {
+          // validate service API schema
+          const schema = meta.api;
+          const errors = this.validateServiceAPISchema(schema);
 
-        // validate service API schema
-        const schema = meta.api;
-        const errors = this.validateServiceAPISchema(schema);
+          if (errors.length > 0) {
+            errors.forEach((err) => reporter.error(err));
+            const at = new Date();
+            const errorsTable = Reporter.getTable(errors.map((message) => ({ type: "error", message, at })));
+            this.props.logger.error(`failed to validate ${service} API schema: ${errorsTable}`);
+          } else {
+            // create integration source
+            integration = { schema, schemaHash: this.hashServiceAPISchema(schema), service, reporter };
 
-        if (errors.length > 0) {
-          errors.forEach(err => reporter.error(err));
-          const at = new Date();
-          const errorsTable = Reporter.getTable(errors.map(message => ({ type: "error", message, at })));
-          this.props.logger.error(`failed to validate ${service} API schema: ${errorsTable}`);
-        } else {
-          // create integration source
-          integration = {schema, schemaHash: this.hashServiceAPISchema(schema), service, reporter};
-
-          // assure new branch creation
-          await this.findOrCreateBranch(schema.branch);
+            // assure new branch creation
+            await this.findOrCreateBranch(schema.branch);
+          }
         }
-      }
 
-      // connect service to each branches' latest version
-      for (const branch of this.branchMap.values()) {
-        await branch.connectService(service, integration);
-      }
-    })
-      .catch(error => {
+        // connect service to each branches' latest version
+        for (const branch of this.branchMap.values()) {
+          await branch.connectService(service, integration);
+        }
+      })
+      .catch((error) => {
         if (error instanceof FatalError) throw error;
         this.props.logger.error(`failed to connect ${service} service`, error);
       });
   }
 
   private serviceDisconnected(service: Readonly<Service>): void {
-    this.lock.acquire("discovery", async () => {
-      this.props.logger.info(`${service} service has been disconnected`);
+    this.lock
+      .acquire("discovery", async () => {
+        this.props.logger.info(`${service} service has been disconnected`);
 
-      // disconnect service from each branches' latest version
-      for (const branch of this.branchMap.values()) {
-        await branch.disconnectService(service);
-      }
+        // disconnect service from each branches' latest version
+        for (const branch of this.branchMap.values()) {
+          await branch.disconnectService(service);
+        }
 
-      this.serviceReporterMap.delete(service);
-    })
-      .catch(error => {
+        this.serviceReporterMap.delete(service);
+      })
+      .catch((error) => {
         if (error instanceof FatalError) throw error;
         this.props.logger.error(`failed to disconnect ${service} service`, error);
       });
@@ -207,99 +220,109 @@ export class SchemaRegistry {
       this.serviceReporterMap.set(service, reporter);
     }
     if (reporter) {
-      reporter.info({
-        message: `${service} service node pool has been updated`,
-        service: service.getInformation(),
-      }, "pool-updated");
+      reporter.info(
+        {
+          message: `${service} service node pool has been updated`,
+          service: service.getInformation(),
+        },
+        "pool-updated",
+      );
     }
   }
 
   /* schema management */
   private validateServiceAPISchema(schema: ServiceAPISchema): ValidationError[] {
-    const errors = validateObject(schema, {
-      branch: {
-        type: "string",
-        alphadash: true,
-        empty: false,
-      },
-      protocol: {
-        type: "object",
-        // do not [strict: true,] for plugin deprecation
-        optional: false,
-        props: this.plugin.protocol.reduce((props, plugin) => {
-          props[plugin.key] = {
-            type: "custom",
-            optional: true,
-            check(value: any) {
-              const errs = plugin.validateSchema(value);
-              if (errs.length) {
-                return errs.map(err => {
-                  err.field = `api.protocol.${plugin.key}.${err.field}`;
-                  return err;
-                });
-              }
-
-              // update meta in case of update from plugin
-              schema.protocol[plugin.key as keyof typeof schema.protocol] = value;
-              return true;
-            },
-          };
-          return props;
-        }, {} as ValidationSchema),
-      },
-      policy: {
-        type: "object",
-        optional: false,
-        props: (["call", "publish", "subscribe"] as ("call" | "publish" | "subscribe")[]).reduce((props, connectorType) => {
-          props[connectorType] = {
-            type: "array",
-            optional: true,
-            items: {
-              type: "object",
-              // do not [strict: true,] for plugin deprecation
-              props: this.plugin.policy.reduce((policyItemProps, plugin) => {
-                if (policyItemProps[plugin.key]) {
-                  return policyItemProps;
+    const errors = validateObject(
+      schema,
+      {
+        branch: {
+          type: "string",
+          alphadash: true,
+          empty: false,
+        },
+        protocol: {
+          type: "object",
+          // do not [strict: true,] for plugin deprecation
+          optional: false,
+          props: this.plugin.protocol.reduce((props, plugin) => {
+            props[plugin.key] = {
+              type: "custom",
+              optional: true,
+              check(value: any) {
+                const errs = plugin.validateSchema(value);
+                if (errs.length) {
+                  return errs.map((err) => {
+                    err.field = `api.protocol.${plugin.key}.${err.field}`;
+                    return err;
+                  });
                 }
-                policyItemProps[plugin.key] = {
-                  type: "custom",
-                  optional: true,
-                  check(value: any) {
-                    const idx = (schema.policy[connectorType]! as (CallPolicySchema|SubscribePolicySchema|PublishPolicySchema)[]).findIndex(p => p[plugin.key] === value);
-                    const errs = plugin.validateSchema(value);
-                    if (errs.length) {
-                      return errs.map(err => {
-                        err.field = `api.policy.${connectorType}[${idx}].${plugin.key}${err.field ? `.${err.field}` : ""}`;
-                        return err;
-                      });
-                    }
 
-                    // update meta in case of update from plugin
-                    schema.policy[plugin.key as keyof typeof schema.policy] = value;
-                    return true;
+                // update meta in case of update from plugin
+                schema.protocol[plugin.key as keyof typeof schema.protocol] = value;
+                return true;
+              },
+            };
+            return props;
+          }, {} as ValidationSchema),
+        },
+        policy: {
+          type: "object",
+          optional: false,
+          props: (["call", "publish", "subscribe"] as ("call" | "publish" | "subscribe")[]).reduce((props, connectorType) => {
+            props[connectorType] = {
+              type: "array",
+              optional: true,
+              items: {
+                type: "object",
+                // do not [strict: true,] for plugin deprecation
+                props: this.plugin.policy.reduce(
+                  (policyItemProps, plugin) => {
+                    if (policyItemProps[plugin.key]) {
+                      return policyItemProps;
+                    }
+                    policyItemProps[plugin.key] = {
+                      type: "custom",
+                      optional: true,
+                      check(value: any) {
+                        const idx = (schema.policy[connectorType]! as (CallPolicySchema | SubscribePolicySchema | PublishPolicySchema)[]).findIndex((p) => p[plugin.key] === value);
+                        const errs = plugin.validateSchema(value);
+                        if (errs.length) {
+                          return errs.map((err) => {
+                            err.field = `api.policy.${connectorType}[${idx}].${plugin.key}${err.field ? `.${err.field}` : ""}`;
+                            return err;
+                          });
+                        }
+
+                        // update meta in case of update from plugin
+                        schema.policy[plugin.key as keyof typeof schema.policy] = value;
+                        return true;
+                      },
+                    };
+                    return policyItemProps;
                   },
-                };
-                return policyItemProps;
-              }, {
-                description: "string",
-                [connectorType === "call" ? "actions" : "events"]: {
-                  type: "array",
-                  items: "string",
-                  empty: false,
-                },
-              } as ValidationSchema),
-            },
-          };
-          return props;
-        }, {} as ValidationSchema),
+                  {
+                    description: "string",
+                    [connectorType === "call" ? "actions" : "events"]: {
+                      type: "array",
+                      items: "string",
+                      empty: false,
+                    },
+                  } as ValidationSchema,
+                ),
+              },
+            };
+            return props;
+          }, {} as ValidationSchema),
+        },
       },
-    }, {
-      field: "api",
-      strict: true,
-    });
+      {
+        field: "api",
+        strict: true,
+      },
+    );
 
     // arrange validation errors
-    return errors.map(({type, message, field, actual, expected, location, ...otherProps}) => {
+    return errors.map(({ type, message, field, actual, expected, location, ...otherProps }) => {
       const err = {
         type: type,
         message: message ? message : undefined,
@@ -358,11 +381,14 @@ export class SchemaRegistry {
         });
       } else {
         // create whole new branch (master branch)
-        branch = new Branch({
-          name: branchName,
-          logger: this.props.logger.getChild(branchName),
-          protocolPlugins: this.plugin.protocol,
-        }, this.branchOptions);
+        branch = new Branch(
+          {
+            name: branchName,
+            logger: this.props.logger.getChild(branchName),
+            protocolPlugins: this.plugin.protocol,
+          },
+          this.branchOptions,
+        );
       }
 
       await branch.start({

@@ -58,11 +58,11 @@ function recNormalizeValidationSchema(paramSchema: ValidationSchema[string]): No
       description: null,
     };
 
-    const tokens = paramSchema.split("|").filter(t => t);
+    const tokens = paramSchema.split("|").filter((t) => t);
     if (tokens.length > 1) {
-      for (let i=1; i<tokens.length; i++) {
+      for (let i = 1; i < tokens.length; i++) {
         const token = tokens[i];
-        const subTokens = token.split(":").filter(t => t);
+        const subTokens = token.split(":").filter((t) => t);
         if (subTokens.length === 1) {
           schema[token] = true;
         } else if (subTokens.length === 2) {
@@ -73,13 +73,13 @@ function recNormalizeValidationSchema(paramSchema: ValidationSchema[string]): No
     }
   } else if (Array.isArray(paramSchema)) {
     // normalize array syntax
-    const items = paramSchema.map(s => recNormalizeValidationSchema(s));
+    const items = paramSchema.map((s) => recNormalizeValidationSchema(s));
     schema = {
       type: "oneOf",
       deprecated: false,
       description: null,
-      optional: items.every(item => item.optional),
-      items: paramSchema.map(s => recNormalizeValidationSchema(s)),
+      optional: items.every((item) => item.optional),
+      items: paramSchema.map((s) => recNormalizeValidationSchema(s)),
     };
   } else if (paramSchema && typeof paramSchema === "object") {
     // normalize recursive rules
@@ -111,7 +111,7 @@ function recNormalizeValidationSchema(paramSchema: ValidationSchema[string]): No
 }
 
 export type ValidationFn = (object: object) => true | ValidationError[];
-export type ValidateOptions = { strict: boolean, field: string, messages: MessagesType  };
+export type ValidateOptions = { strict: boolean; field: string; messages: MessagesType };
 
 export function compileValidationSchema(schema: ValidationSchema, opts?: RecursivePartial<ValidateOptions>): ValidationFn {
   const options: ValidateOptions = _.defaultsDeep(opts || {}, { strict: true, field: "", messages: {} });
@@ -178,10 +178,14 @@ export function validateValue(value: any, rule: ValidationRule | ValidationRule[
 
 export function validateInlineFunction(fnString: string): boolean {
   try {
-    return vm.runInNewContext(`typeof (${fnString}) === "function"`, {}, {
-      displayErrors: true,
-      timeout: 100,
-    });
+    return vm.runInNewContext(
+      `typeof (${fnString}) === "function"`,
+      {},
+      {
+        displayErrors: true,
+        timeout: 100,
+      },
+    );
   } catch {
     return false;
   }

@@ -6,16 +6,16 @@ export * from "./policy";
 
 /* plugins */
 export const SchemaPluginConstructors: {
-  protocol: typeof ProtocolPluginConstructors,
-  policy: typeof PolicyPluginConstructors,
+  protocol: typeof ProtocolPluginConstructors;
+  policy: typeof PolicyPluginConstructors;
 } = {
   protocol: ProtocolPluginConstructors,
   policy: PolicyPluginConstructors,
 };
 
 export type SchemaPluginConstructorOptions = {
-  protocol: ProtocolPluginConstructorOptions,
-  policy: PolicyPluginConstructorOptions,
+  protocol: ProtocolPluginConstructorOptions;
+  policy: PolicyPluginConstructorOptions;
 };
 
 export const defaultSchemaPluginConstructorOptions: SchemaPluginConstructorOptions = {

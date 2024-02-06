@@ -4,8 +4,7 @@ import { APIRequestContextFactory, APIRequestContextProps, APIRequestContextSour
 
 export type APIRequestContextConstructor = (source: APIRequestContextSource) => Promise<APIRequestContext>;
 
-export interface APIRequestContext extends APIRequestContextProps {
-}
+export interface APIRequestContext extends APIRequestContextProps {}
 
 type APIRequestContextStore = Map<symbol, APIRequestContextStoreItemClearer>;
 type APIRequestContextStoreItemClearer = [any, (value: any) => void];
@@ -13,7 +12,7 @@ type APIRequestContextStoreItemClearer = [any, (value: any) => void];
 export class APIRequestContext {
   protected constructor(props: APIRequestContextProps) {
     Object.assign(this, props);
-    Object.defineProperty(this, APIRequestContext.StoreSymbol, {value: new Map(), enumerable: true, configurable: false, writable: false}); // should be enumerable, ... for plugins which adjust given context
+    Object.defineProperty(this, APIRequestContext.StoreSymbol, { value: new Map(), enumerable: true, configurable: false, writable: false }); // should be enumerable, ... for plugins which adjust given context
   }
 
   private static SourceContextIsCreatingSymbol = Symbol("APIRequestContextIsCreating");
@@ -27,7 +26,7 @@ export class APIRequestContext {
       after?: (source: APIRequestContextSource, context: APIRequestContext) => void;
     },
   ): APIRequestContextConstructor {
-    return async source => {
+    return async (source) => {
       if (source.hasOwnProperty(APIRequestContext.SourceContextIsCreatingSymbol)) {
         throw new Error("request already handled"); // TODO: normalize error
       }
@@ -37,7 +36,7 @@ export class APIRequestContext {
         try {
           const { query } = url.parse(source.url!);
           if (query) {
-            const headersJSON = qs.parse(query, {allowPrototypes: true}).headers;
+            const headersJSON = qs.parse(query, { allowPrototypes: true }).headers;
             if (headersJSON && typeof headersJSON === "string") {
               const headers = JSON.parse(headersJSON);
               for (const [k, v] of Object.entries(headers)) {
@@ -53,16 +52,15 @@ export class APIRequestContext {
       }
 
       // add reference to source which denote parsing context currently
-      Object.defineProperty(source, APIRequestContext.SourceContextIsCreatingSymbol, {value: true});
+      Object.defineProperty(source, APIRequestContext.SourceContextIsCreatingSymbol, { value: true });
 
       if (hooks && hooks.before) {
         hooks.before(source);
       }
 
-
       // create props
       const props: APIRequestContextProps = {};
-      const propEntries = await Promise.all(factories.map(async factory => [factory.key, await factory.create(source)] as [string, any]));
+      const propEntries = await Promise.all(factories.map(async (factory) => [factory.key, await factory.create(source)] as [string, any]));
       for (const [k, v] of propEntries) {
         props[k as keyof APIRequestContextProps] = v;
       }
@@ -71,7 +69,7 @@ export class APIRequestContext {
       const context = new APIRequestContext(props);
 
       // add reference to source
-      Object.defineProperty(source, APIRequestContext.SourceContextSymbol, {value: context});
+      Object.defineProperty(source, APIRequestContext.SourceContextSymbol, { value: context });
 
       if (hooks && hooks.after) {
         hooks.after(source, context);

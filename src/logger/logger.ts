@@ -4,10 +4,13 @@ export type LoggerProps = {
   label: string;
 };
 
-export type LogLevel = "info"|"warn"|"debug"|"error";
+export type LogLevel = "info" | "warn" | "debug" | "error";
 
 export abstract class Logger extends HasStaticKey {
-  constructor(protected readonly props: LoggerProps, opts?: any) {
+  constructor(
+    protected readonly props: LoggerProps,
+    opts?: any,
+  ) {
     super();
   }
 

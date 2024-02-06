@@ -1,10 +1,10 @@
 import { context, vault } from "qmit-sdk";
-import 'dotenv/config';
+import "dotenv/config";
 // create global configuration
 // can fetch vault secrets in local/kubernetes environment
 
 /* istanbul ignore next */
-export const config =  {
+export const config = {
   env: process.env.QMIT_APP_ENV,
   isDev: process.env.QMIT_APP_ENV === "dev",
   isDebug: !!process.env.APP_DEBUG,

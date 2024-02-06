@@ -34,10 +34,7 @@ export class ServerHTTPProtocol extends ServerProtocol {
 
     // listen
     this.server.listen(port, hostname);
-    return [
-      `http://${hostname}:${port}`,
-      `ws://${hostname}:${port}`,
-    ];
+    return [`http://${hostname}:${port}`, `ws://${hostname}:${port}`];
   }
 
   public async stop(): Promise<void> {

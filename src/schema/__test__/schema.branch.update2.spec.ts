@@ -11,13 +11,13 @@ const moleculer = {
 };
 
 const schema = getSchemaRegistry({
-  logger: {level: "error", label: "gateway"},
-  delegator: {moleculer: {...moleculer, nodeID: "gateway"}},
+  logger: { level: "error", label: "gateway" },
+  delegator: { moleculer: { ...moleculer, nodeID: "gateway" } },
 });
 
 const remote1 = getMoleculerServiceBroker({
-  logger: {level: "error", label: "remote"},
-  moleculer: {...moleculer, nodeID: "remote"},
+  logger: { level: "error", label: "remote" },
+  moleculer: { ...moleculer, nodeID: "remote" },
   services: [
     MoleculerServiceSchemaFactory.echo("master", "master-a"),
     MoleculerServiceSchemaFactory.echo("master", "conflict-a", {
@@ -77,8 +77,8 @@ const remote1 = getMoleculerServiceBroker({
 });
 
 const remote2 = getMoleculerServiceBroker({
-  logger: {level: "error", label: "remote2"},
-  moleculer: {...moleculer, nodeID: "remote2"},
+  logger: { level: "error", label: "remote2" },
+  moleculer: { ...moleculer, nodeID: "remote2" },
   services: [
     MoleculerServiceSchemaFactory.echo("dev", "conflict-a", {
       protocol: {
@@ -111,35 +111,31 @@ beforeAll(async () => {
     remote1.start(),
     remote2.start(),
     schema.start({
-      updated: branch => mocks[branch.name as "dev" | "master"](),
+      updated: (branch) => mocks[branch.name as "dev" | "master"](),
       removed: jest.fn(),
     }),
   ]);
   await sleepUntil(() => {
     const dev = schema.getBranch("dev");
-    return dev && dev.services.length >= 2 || false;
+    return (dev && dev.services.length >= 2) || false;
   });
   await remote2.stop();
   await sleepUntil(() => {
     const dev = schema.getBranch("dev");
-    return dev && dev.latestVersion.routes.length >= 9 || false;
+    return (dev && dev.latestVersion.routes.length >= 9) || false;
   });
 });
 
 describe("Schema registry update", () => {
   it("master branch should gathered master/non-branched services", () => {
-    const serviceIds = schema.getBranch("master")!.services.map(s => s.id);
-    expect(serviceIds).toEqual(expect.arrayContaining([
-      "master-a", "conflict-a",
-    ]));
+    const serviceIds = schema.getBranch("master")!.services.map((s) => s.id);
+    expect(serviceIds).toEqual(expect.arrayContaining(["master-a", "conflict-a"]));
     expect(serviceIds).toHaveLength(2);
   });
 
   it("dev should gathered dev/master/non-branched services and fall back to master branched service when dev branched service removed", () => {
-    const serviceIds = schema.getBranch("dev")!.services.map(s => s.id);
-    expect(serviceIds).toEqual(expect.arrayContaining([
-      "master-a", "conflict-a",
-    ]));
+    const serviceIds = schema.getBranch("dev")!.services.map((s) => s.id);
+    expect(serviceIds).toEqual(expect.arrayContaining(["master-a", "conflict-a"]));
     expect(serviceIds).toHaveLength(2);
   });
 
@@ -156,9 +152,5 @@ describe("Schema registry update", () => {
 });
 
 afterAll(async () => {
-  await Promise.all([
-    schema.stop(),
-    remote1.stop(),
-    remote2.stop(),
-  ]);
+  await Promise.all([schema.stop(), remote1.stop(), remote2.stop()]);
 });

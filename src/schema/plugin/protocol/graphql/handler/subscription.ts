@@ -5,9 +5,9 @@ import * as WebSocket from "ws";
 import { WebSocketRouteHandler } from "../../../../../server";
 
 /*
-* will not extends SubscriptionServer, copy prototype and modify constructor to detach ws.Server implementation
-* ref: https://github.com/apollographql/subscriptions-transport-ws/blob/ad169f57d7b4630855e1aac06dd4d34875fa8721/src/server.ts#L117
-*/
+ * will not extends SubscriptionServer, copy prototype and modify constructor to detach ws.Server implementation
+ * ref: https://github.com/apollographql/subscriptions-transport-ws/blob/ad169f57d7b4630855e1aac06dd4d34875fa8721/src/server.ts#L117
+ */
 
 // tslint:disable:ban-types
 export class GraphQLSubscriptionHandler {
@@ -23,14 +23,10 @@ export class GraphQLSubscriptionHandler {
   private schema?: GraphQLSchema;
   private rootValue?: any;
   private closeHandler?: () => void;
-  private specifiedRules:
-    ((context: ValidationContext) => any)[] |
-    ReadonlyArray<any>;
+  private specifiedRules: ((context: ValidationContext) => any)[] | ReadonlyArray<any>;
 
   constructor(options: SubscriptionServerOptions) {
-    const {
-      onOperation, onOperationComplete, onConnect, onDisconnect, keepAlive,
-    } = options;
+    const { onOperation, onOperationComplete, onConnect, onDisconnect, keepAlive } = options;
 
     this.specifiedRules = options.validationRules || specifiedRules;
     this.loadExecutor(options);
@@ -45,15 +41,13 @@ export class GraphQLSubscriptionHandler {
       // See: https://github.com/websockets/ws/pull/1099
       (socket as any).upgradeReq = request;
       // NOTE: the old GRAPHQL_SUBSCRIPTIONS protocol support should be removed in the future
-      if (socket.protocol === undefined ||
-        (socket.protocol.indexOf(GRAPHQL_WS) === -1 && socket.protocol.indexOf(GRAPHQL_SUBSCRIPTIONS) === -1)) {
+      if (socket.protocol === undefined || (socket.protocol.indexOf(GRAPHQL_WS) === -1 && socket.protocol.indexOf(GRAPHQL_SUBSCRIPTIONS) === -1)) {
         // Close the connection with an error code, ws v2 ensures that the
         // connection is cleaned up even when the closing handshake fails.
         // 1002: protocol error
         socket.close(1002);
         return;
       }
-
 
       const connectionContext: ConnectionContext = Object.create(null);
       connectionContext.initPromise = Promise.resolve(context);
@@ -64,12 +58,7 @@ export class GraphQLSubscriptionHandler {
 
       const connectionClosedHandler = (error: any) => {
         if (error) {
-          this.sendError(
-            connectionContext,
-            "",
-            {message: error.message ? error.message : error},
-            MessageTypes.GQL_CONNECTION_ERROR,
-          );
+          this.sendError(connectionContext, "", { message: error.message ? error.message : error }, MessageTypes.GQL_CONNECTION_ERROR);
 
           setTimeout(() => {
             // 1011 is an unexpected condition prevented the request from being fulfilled

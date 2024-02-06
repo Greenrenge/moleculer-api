@@ -4,7 +4,7 @@ import http2 from "http2";
 import ws from "ws";
 
 export type WebSocket = ws;
-export type WebSocketHTTPRequest = (http.IncomingMessage | http2.Http2ServerRequest) & { path: string, params: any, query: any };
+export type WebSocketHTTPRequest = (http.IncomingMessage | http2.Http2ServerRequest) & { path: string; params: any; query: any };
 export type WebSocketRouteHandler<Context = any> = (context: Context, socket: WebSocket, req: WebSocketHTTPRequest) => void;
 
 /*
@@ -22,7 +22,7 @@ export class WebSocketRoute extends Route {
   protected readonly props: WebSocketRouteProps;
 
   constructor(props: Omit<WebSocketRouteProps, "protocol">) {
-    const propsWithProtocol = {...props, protocol: "ws"};
+    const propsWithProtocol = { ...props, protocol: "ws" };
     super(propsWithProtocol as RouteProps);
     this.props = propsWithProtocol;
   }

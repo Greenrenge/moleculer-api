@@ -35,13 +35,18 @@ export type GraphQLProtocolObjectTypeResolverSchema = {
   [fieldName: string]: GraphQLCallableFieldResolverSchema | GraphQLMappableFieldResolverSchema;
 };
 
-export type GraphQLFieldResolverSchema = GraphQLCallableFieldResolverSchema | GraphQLPublishableFieldResolverSchema | GraphQLSubscribableFieldResolverSchema
-  | GraphQLMappableFieldResolverSchema | GraphQLIsTypeOfFieldResolverSchema | undefined;
+export type GraphQLFieldResolverSchema =
+  | GraphQLCallableFieldResolverSchema
+  | GraphQLPublishableFieldResolverSchema
+  | GraphQLSubscribableFieldResolverSchema
+  | GraphQLMappableFieldResolverSchema
+  | GraphQLIsTypeOfFieldResolverSchema
+  | undefined;
 export type GraphQLCallableFieldResolverSchema = { call: CallConnectorSchema; ignoreError?: boolean };
-export type GraphQLPublishableFieldResolverSchema = { publish: PublishConnectorSchema; };
-export type GraphQLSubscribableFieldResolverSchema =  { subscribe: SubscribeConnectorSchema; };
-export type GraphQLMappableFieldResolverSchema = MapConnectorSchema<(obj: { source: any, args: any, info: GraphQLResolveInfo, context: any }) => any>;
-export type GraphQLIsTypeOfFieldResolverSchema = MapConnectorSchema<(obj: { source: any, info: GraphQLResolveInfo, context: any }) => boolean>;
+export type GraphQLPublishableFieldResolverSchema = { publish: PublishConnectorSchema };
+export type GraphQLSubscribableFieldResolverSchema = { subscribe: SubscribeConnectorSchema };
+export type GraphQLMappableFieldResolverSchema = MapConnectorSchema<(obj: { source: any; args: any; info: GraphQLResolveInfo; context: any }) => any>;
+export type GraphQLIsTypeOfFieldResolverSchema = MapConnectorSchema<(obj: { source: any; info: GraphQLResolveInfo; context: any }) => boolean>;
 
 export type GraphQLProtocolPluginCatalog = IProtocolPluginCatalog & {
   schema: GraphQLProtocolPluginSchema;
@@ -51,11 +56,13 @@ export type GraphQLProtocolPluginCatalog = IProtocolPluginCatalog & {
     kind: string;
     description: string | null;
     deprecated: boolean;
-    fields: {
-      name: string;
-      description: string | null;
-      deprecated: boolean;
-      connector: ConnectorCatalog;
-    }[] | null;
+    fields:
+      | {
+          name: string;
+          description: string | null;
+          deprecated: boolean;
+          connector: ConnectorCatalog;
+        }[]
+      | null;
   }[];
 };

@@ -9,7 +9,8 @@ import {
   APIRequestContextFactoryConstructorOptions,
   defaultAPIRequestContextFactoryConstructorOptions,
   APIRequestContextFactory,
-  Route, HTTPRoute
+  Route,
+  HTTPRoute,
 } from "./application";
 import { ServerMiddlewareConstructorOptions, defaultServerMiddlewareConstructorOptions, ServerMiddlewareConstructors } from "./middleware";
 import { ServerProtocol, ServerProtocolConstructorOptions, defaultServerProtocolConstructorOptions, ServerProtocolConstructors } from "./protocol";
@@ -37,7 +38,10 @@ export class APIServer {
   private readonly app: ServerApplication;
   private readonly protocols: ServerProtocol[];
 
-  constructor(private props: APIServerProps, opts?: RecursivePartial<APIServerOptions>) {
+  constructor(
+    private props: APIServerProps,
+    opts?: RecursivePartial<APIServerOptions>,
+  ) {
     // adjust options
     this.opts = _.defaultsDeep(opts || {}, {
       update: {
@@ -53,25 +57,30 @@ export class APIServer {
     this.opts.update.maxDebouncedSeconds = isNaN(this.opts.update.maxDebouncedSeconds) ? 5 : Math.max(this.opts.update.maxDebouncedSeconds, this.opts.update.debouncedSeconds, 1);
 
     // create context factory
-    const contextFactories = Object.entries(this.opts.context)
-      .reduce((factories, [k, options]) => {
-        const key = k as keyof APIRequestContextFactoryConstructorOptions;
-        if (options !== false) {
-          factories.push(
-            new (APIRequestContextFactoryConstructors[key])({
+    const contextFactories = Object.entries(this.opts.context).reduce((factories, [k, options]) => {
+      const key = k as keyof APIRequestContextFactoryConstructorOptions;
+      if (options !== false) {
+        factories.push(
+          new APIRequestContextFactoryConstructors[key](
+            {
               logger: this.props.logger.getChild(`context/${key}`),
-            }, options),
-          );
-        }
-        return factories;
-      }, [] as APIRequestContextFactory<any>[]);
+            },
+            options,
+          ),
+        );
+      }
+      return factories;
+    }, [] as APIRequestContextFactory<any>[]);
     this.props.logger.info(`gateway context factories have been applied ${contextFactories.join(", ")}`);
 
     // create application
-    this.app = new ServerApplication({
-      logger: this.props.logger.getChild(`application`),
-      contextFactories,
-    }, this.opts.application);
+    this.app = new ServerApplication(
+      {
+        logger: this.props.logger.getChild(`application`),
+        contextFactories,
+      },
+      this.opts.application,
+    );
 
     // override middleware options
     const middlewareKeyAndOptions: [keyof ServerMiddlewareConstructorOptions, any][] = [];
@@ -89,9 +98,12 @@ export class APIServer {
     const middleware = middlewareKeyAndOptions
       .filter(([key, options]) => options !== false)
       .map(([key, options]) => {
-        return new (ServerMiddlewareConstructors[key])({
-          logger: this.props.logger.getChild(`middleware/${key}`),
-        }, options);
+        return new ServerMiddlewareConstructors[key](
+          {
+            logger: this.props.logger.getChild(`middleware/${key}`),
+          },
+          options,
+        );
       });
 
     // apply application middleware
@@ -101,18 +113,20 @@ export class APIServer {
     this.props.logger.info(`gateway server middleware have been applied: ${middleware.join(", ")}`);
 
     // create protocol
-    this.protocols = Object.entries(this.opts.protocol)
-      .reduce((protocols, [k, options]) => {
-        const key = k as keyof ServerProtocolConstructorOptions;
-        if (options !== false) {
-          protocols.push(
-            new (ServerProtocolConstructors[key])({
+    this.protocols = Object.entries(this.opts.protocol).reduce((protocols, [k, options]) => {
+      const key = k as keyof ServerProtocolConstructorOptions;
+      if (options !== false) {
+        protocols.push(
+          new ServerProtocolConstructors[key](
+            {
               logger: this.props.logger.getChild(`protocol/${key}`),
-            }, options),
-          );
-        }
-        return protocols;
-      }, [] as ServerProtocol[]);
+            },
+            options,
+          ),
+        );
+      }
+      return protocols;
+    }, [] as ServerProtocol[]);
   }
 
   /* lifecycle */
@@ -141,9 +155,13 @@ export class APIServer {
       updated: (branch) => {
         let handler = debouncedBranchUpdateHandlers.get(branch);
         if (!handler) {
-          handler = _.debounce(() => {
-            return this.app.mountBranchHandler(branch);
-          }, 1000 * this.opts.update.debouncedSeconds, {maxWait: 1000 * this.opts.update.maxDebouncedSeconds});
+          handler = _.debounce(
+            () => {
+              return this.app.mountBranchHandler(branch);
+            },
+            1000 * this.opts.update.debouncedSeconds,
+            { maxWait: 1000 * this.opts.update.maxDebouncedSeconds },
+          );
           debouncedBranchUpdateHandlers.set(branch, handler);
         }
         return handler();
@@ -151,13 +169,16 @@ export class APIServer {
       removed: (branch) => {
         let handler = debouncedBranchRemovedHandlers.get(branch);
         if (!handler) {
-          handler = _.debounce(() => {
-            return this.app.unmountBranchHandler(branch)
-              .finally(() => {
+          handler = _.debounce(
+            () => {
+              return this.app.unmountBranchHandler(branch).finally(() => {
                 debouncedBranchUpdateHandlers.delete(branch);
                 debouncedBranchRemovedHandlers.delete(branch);
               });
-          }, 1000 * this.opts.update.debouncedSeconds, {maxWait: 1000 * this.opts.update.maxDebouncedSeconds});
+            },
+            1000 * this.opts.update.debouncedSeconds,
+            { maxWait: 1000 * this.opts.update.maxDebouncedSeconds },
+          );
           debouncedBranchRemovedHandlers.set(branch, handler);
         }
         return handler();

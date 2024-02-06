@@ -19,7 +19,7 @@ export class BodyParserMiddleware extends ServerMiddleware {
   public static readonly autoLoadOptions: BodyParserMiddlewareOptions = {
     json: {
       strict: false,
-      limit : "10mb",
+      limit: "10mb",
     },
     urlencoded: {
       extended: true,
@@ -27,7 +27,10 @@ export class BodyParserMiddleware extends ServerMiddleware {
   };
   private readonly opts: BodyParserMiddlewareOptions;
 
-  constructor(protected readonly props: ServerMiddlewareProps, opts?: RecursivePartial<BodyParserMiddlewareOptions>) {
+  constructor(
+    protected readonly props: ServerMiddlewareProps,
+    opts?: RecursivePartial<BodyParserMiddlewareOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, BodyParserMiddleware.autoLoadOptions);
   }

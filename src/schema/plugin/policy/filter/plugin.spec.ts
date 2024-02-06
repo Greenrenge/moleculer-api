@@ -11,10 +11,12 @@ describe("Filter policy schema validation test", () => {
   });
 
   it("invalid schema should be return errors", () => {
-    return expect(plugin.validateSchema("12345")).toMatchObject(expect.arrayContaining([
-      expect.objectContaining({
-        expected: "JavaScriptFunctionString",
-      }),
-    ]));
+    return expect(plugin.validateSchema("12345")).toMatchObject(
+      expect.arrayContaining([
+        expect.objectContaining({
+          expected: "JavaScriptFunctionString",
+        }),
+      ]),
+    );
   });
 });

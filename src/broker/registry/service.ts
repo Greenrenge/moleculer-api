@@ -17,12 +17,12 @@ export class Service {
   public readonly nodeIdMap: Map<string, Readonly<ServiceNode>>;
   public readonly actionMap: Map<string, Readonly<ServiceAction>>;
   public readonly subscribedEvents: Readonly<ServiceEvent>[];
-  public readonly status: ServiceStatus = {message: "unknown", code: 503, updatedAt: new Date()};
+  public readonly status: ServiceStatus = { message: "unknown", code: 503, updatedAt: new Date() };
   public readonly shortHash: string;
   private $broker: Readonly<ServiceBroker> | null = null;
 
   constructor(protected readonly props: ServiceProps) {
-    this.nodeIdMap = new Map<string, ServiceNode>(this.props.nodes.map(n => [n.id, n]));
+    this.nodeIdMap = new Map<string, ServiceNode>(this.props.nodes.map((n) => [n.id, n]));
     this.actionMap = new Map<string, ServiceAction>();
     this.shortHash = this.props.hash.substr(0, 8);
     this.subscribedEvents = [];
@@ -38,8 +38,8 @@ export class Service {
       name: this.displayName,
       description: this.description,
       meta: this.meta,
-      nodes: [...this.nodeIdMap.values()].map(node => node.getInformation()),
-      actions: includeActions ? [...this.actionMap.values()].map(action => action.getInformation(true)) : null,
+      nodes: [...this.nodeIdMap.values()].map((node) => node.getInformation()),
+      actions: includeActions ? [...this.actionMap.values()].map((action) => action.getInformation(true)) : null,
     };
   }
 
@@ -128,7 +128,7 @@ export class Service {
       ...event,
       service: this,
     });
-    const idx = this.subscribedEvents.findIndex(e => e.id === event.id && e.group === event.group);
+    const idx = this.subscribedEvents.findIndex((e) => e.id === event.id && e.group === event.group);
     if (idx > -1) {
       this.subscribedEvents.splice(idx, 1, evt);
     } else {

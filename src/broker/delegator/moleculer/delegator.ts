@@ -15,12 +15,14 @@ export type MoleculerServiceBrokerDelegatorOwnOptions = {
   batchedCallTimeout: (itemCount: number) => number; // count -> ms
   streamingCallTimeout: number; // ms, default is one hour
   streamingToStringEncoding: "ascii" | "utf8" | "utf-8" | "utf16le" | "ucs2" | "ucs-2" | "base64" | "latin1" | "binary" | "hex"; // default is base64, check your transporter on malformed streaming
-}
+};
 
-export type MoleculerServiceBrokerDelegatorOptions = Moleculer.BrokerOptions
-  & Partial<MoleculerServiceBrokerDelegatorOwnOptions & {
-    services: (Moleculer.ServiceSchema & { metadata?: ServiceMetaDataSchema })[];
-  }>;
+export type MoleculerServiceBrokerDelegatorOptions = Moleculer.BrokerOptions &
+  Partial<
+    MoleculerServiceBrokerDelegatorOwnOptions & {
+      services: (Moleculer.ServiceSchema & { metadata?: ServiceMetaDataSchema })[];
+    }
+  >;
 
 type Context = Moleculer.Context;
 
@@ -30,13 +32,16 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
   private readonly service: Moleculer.Service;
   private readonly opts: MoleculerServiceBrokerDelegatorOwnOptions;
 
-  constructor(protected readonly props: ServiceBrokerDelegatorProps, opts?: MoleculerServiceBrokerDelegatorOptions) {
+  constructor(
+    protected readonly props: ServiceBrokerDelegatorProps,
+    opts?: MoleculerServiceBrokerDelegatorOptions,
+  ) {
     super(props);
 
     const {
       services = [],
       batchedCallTimeout = (itemCount: number) => {
-        return Math.max(5000, Math.min(1000*60, itemCount * 1000));
+        return Math.max(5000, Math.min(1000 * 60, itemCount * 1000));
       },
       streamingCallTimeout = 1000 * 3600,
       streamingToStringEncoding = "base64",
@@ -75,39 +80,39 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
 
   // ref: https://github.com/moleculerjs/moleculer/blob/5b94fa27b38a4134b14d0fbe50717167d6b80cf8/src/utils.js#L266
   private matchName(text: string, pattern: string): boolean {
-      // Exact match (eg. "prefix.event")
-      const firstStarPosition = pattern.indexOf("*");
-      if (firstStarPosition === -1) {
-        return pattern === text;
-      }
+    // Exact match (eg. "prefix.event")
+    const firstStarPosition = pattern.indexOf("*");
+    if (firstStarPosition === -1) {
+      return pattern === text;
+    }
 
-      // Eg. "prefix**"
-      const len = pattern.length;
-      if (len > 2 && pattern.endsWith("**") && firstStarPosition > len - 3) {
-        pattern = pattern.substring(0, len - 2);
-        return text.startsWith(pattern);
-      }
+    // Eg. "prefix**"
+    const len = pattern.length;
+    if (len > 2 && pattern.endsWith("**") && firstStarPosition > len - 3) {
+      pattern = pattern.substring(0, len - 2);
+      return text.startsWith(pattern);
+    }
 
-      // Eg. "prefix*"
-      if (len > 1 && pattern.endsWith("*") && firstStarPosition > len - 2) {
-        pattern = pattern.substring(0, len - 1);
-        if (text.startsWith(pattern)) {
-          return text.indexOf(".", len) === -1;
-        }
-        return false;
+    // Eg. "prefix*"
+    if (len > 1 && pattern.endsWith("*") && firstStarPosition > len - 2) {
+      pattern = pattern.substring(0, len - 1);
+      if (text.startsWith(pattern)) {
+        return text.indexOf(".", len) === -1;
       }
-
-      // Accept simple text, without point character (*)
-      if (len === 1 && firstStarPosition == 0) {
-        return text.indexOf(".") === -1;
-      }
-
-      // Accept all inputs (**)
-      if (len === 2 && firstStarPosition === 0 && pattern.lastIndexOf("*") === 1) {
-        return true;
-      }
-
       return false;
+    }
+
+    // Accept simple text, without point character (*)
+    if (len === 1 && firstStarPosition === 0) {
+      return text.indexOf(".") === -1;
+    }
+
+    // Accept all inputs (**)
+    if (len === 2 && firstStarPosition === 0 && pattern.lastIndexOf("*") === 1) {
+      return true;
+    }
+
+    return false;
   }
 
   /* lifecycle */
@@ -154,7 +159,7 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
     }
 
     const candidateNodeIdMap = action.service.nodeIdMap;
-    const endpoints = epList.endpoints.filter((ep: { isAvailable: any; id: string; }) => ep.isAvailable && candidateNodeIdMap.has(ep.id));
+    const endpoints = epList.endpoints.filter((ep: { isAvailable: any; id: string }) => ep.isAvailable && candidateNodeIdMap.has(ep.id));
     if (endpoints.length === 0) {
       return null;
     }
@@ -168,7 +173,7 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
   }
 
   public async call(context: Context, args: DelegatedCallArgs): Promise<any> {
-    const {action, node, params, disableCache} = args;
+    const { action, node, params, disableCache } = args;
     if (disableCache) {
       (context.meta as any).$cache = false;
     }
@@ -187,7 +192,7 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
     if (typeof params === "object" && params !== null) {
       // pipe streaming data only when root object has stream
       if (typeof params.createReadStream === "function") {
-        const {createReadStream, ...meta} = params;
+        const { createReadStream, ...meta } = params;
         const stream = params.createReadStream();
         if (!isReadStream(stream)) {
           throw new Error("invalid stream request"); // TODO: normalize error
@@ -198,7 +203,7 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
         callOpts.retries = 0;
         callOpts.timeout = this.opts.streamingCallTimeout;
 
-      // read all file streams as buffer for child stream params
+        // read all file streams as buffer for child stream params
       } else if (await this.parseNestedStreamAsBuffer(callParams)) {
         callOpts.retries = 0;
         callOpts.timeout = this.opts.streamingCallTimeout;
@@ -231,10 +236,8 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
   private async parseNestedStreamAsBuffer(v: any): Promise<boolean> {
     if (Array.isArray(v)) {
       // return either any props had a stream or not.
-      return (await Promise.all(v.map((vv: any) => this.parseNestedStreamAsBuffer(vv)))).some(p => !!p);
-
+      return (await Promise.all(v.map((vv: any) => this.parseNestedStreamAsBuffer(vv)))).some((p) => !!p);
     } else if (typeof v === "object" && v !== null) {
-
       // found a stream object
       if (typeof (v as any).createReadStream === "function") {
         const stream: fs.ReadStream = (v as any).createReadStream();
@@ -247,7 +250,7 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
         await new Promise<string | void>((resolve, reject) => {
           const chunks: any[] = [];
           stream
-            .on("data", chunk => chunks.push(chunk))
+            .on("data", (chunk) => chunks.push(chunk))
             .on("error", reject)
             .on("end", () => {
               try {
@@ -257,13 +260,12 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
               } catch (err) {
                 reject(err);
               }
-            })
+            });
         });
         return true;
-
       } else {
         // return either any props had a stream or not.
-        return (await Promise.all(Object.values(v).map(vv => this.parseNestedStreamAsBuffer(vv)))).some(p => !!p);
+        return (await Promise.all(Object.values(v).map((vv) => this.parseNestedStreamAsBuffer(vv)))).some((p) => !!p);
       }
     }
 
@@ -272,9 +274,9 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
 
   /* publish event */
   public async publish(context: Context, args: DelegatedEventPublishArgs): Promise<void> {
-    const {event, params, groups, broadcast} = args;
+    const { event, params, groups, broadcast } = args;
     const publish = broadcast ? this.broker.broadcast : this.broker.emit;
-    publish(event, params, {groups: groups && groups.length > 0 ? groups : undefined, parentCtx: context});
+    publish(event, params, { groups: groups && groups.length > 0 ? groups : undefined, parentCtx: context });
   }
 
   /* cache management */
@@ -351,7 +353,7 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
   }
 
   public async healthCheckPublish(args: Omit<DelegatedEventPublishArgs, "params">): Promise<ServiceStatus> {
-    const {event, groups, broadcast} = args; // ignore params
+    const { event, groups, broadcast } = args; // ignore params
     const updatedAt = new Date();
 
     const transit = this.broker.transit;
@@ -453,9 +455,8 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
   /* send reporter to service */
   public async report(service: Readonly<Service>, messages: Readonly<Report>[], table: string): Promise<void> {
     const action = `${service.id}.$report`;
-    const params = {messages, table};
-    const payloads = Array.from(service.nodeIdMap.keys())
-      .map(nodeID => ({action, params, nodeID }));
+    const params = { messages, table };
+    const payloads = Array.from(service.nodeIdMap.keys()).map((nodeID) => ({ action, params, nodeID }));
     await this.broker.mcall(payloads, { retries: 3, timeout: 3000 });
   }
 }

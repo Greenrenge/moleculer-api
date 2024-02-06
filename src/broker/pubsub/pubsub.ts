@@ -1,7 +1,7 @@
 import { PubSub as PubSubDelegator } from "graphql-subscriptions";
 /*
-* This PubSub implementation is for common use case of any plugins not just for GraphQL Plugin
-*/
+ * This PubSub implementation is for common use case of any plugins not just for GraphQL Plugin
+ */
 
 export type PubSubProps = {
   maxListeners: number;
@@ -22,12 +22,12 @@ export abstract class PubSub<EVENTS extends { [event: string]: any }> {
 
   public asyncIterator<EVENT extends Extract<keyof EVENTS, string>>(eventNamePattern: EVENT): AsyncIterator<EVENTS[EVENT]> {
     // const eventNames = this.props.eventNamePatternResolver ? this.props.eventNamePatternResolver(eventNamePattern) : [eventNamePattern];
-    return this.delegator.asyncIterator<EVENTS[EVENT]>( [eventNamePattern]);
+    return this.delegator.asyncIterator<EVENTS[EVENT]>([eventNamePattern]);
   }
 
   public subscribe<EVENT extends Extract<keyof EVENTS, string>>(eventNamePattern: EVENT, listener: (payload: EVENTS[EVENT]) => void): Promise<number[]> {
     // const eventNames = this.props.eventNamePatternResolver ? this.props.eventNamePatternResolver(eventNamePattern) : [eventNamePattern];
-    return Promise.all([eventNamePattern].map(eventName => this.delegator.subscribe(eventName, listener)));
+    return Promise.all([eventNamePattern].map((eventName) => this.delegator.subscribe(eventName, listener)));
   }
 
   public unsubscribe(id: number): void {

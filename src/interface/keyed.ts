@@ -1,4 +1,3 @@
-
 export abstract class HasStaticKey {
   public static readonly key: string;
   public readonly key: string;

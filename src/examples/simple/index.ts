@@ -58,7 +58,7 @@ const gateway = new APIGateway({
     },
   },
   logger: {
-    winston: {level: "info"},
+    winston: { level: "info" },
   },
 });
 
@@ -142,7 +142,7 @@ const services = getMoleculerServiceBroker({
             // bidirectional
             const serverStream = new MemoryStream("---initial-content-from-server---");
             const clientStream = ctx.params! as ReadableStream;
-            clientStream.on("data", data => {
+            clientStream.on("data", (data) => {
               serverStream.write("---remote service received data and echo: " + data.toString() + "---");
             });
             return serverStream;
@@ -151,7 +151,7 @@ const services = getMoleculerServiceBroker({
         "video.stream": {
           handler(ctx) {
             // mono-directional
-            const {id, type} = (ctx.meta || {}) as any;
+            const { id, type } = (ctx.meta || {}) as any;
             if (!id || !type) {
               throw new Error("invalid params");
             }
@@ -178,7 +178,7 @@ const services = getMoleculerServiceBroker({
               });
 
               this.metaChunks = null;
-              stream.on("data", data => {
+              stream.on("data", (data) => {
                 this.lastPacketTime = new Date().getTime();
                 if (!this.metaChunks) {
                   this.metaChunks = [];
@@ -382,18 +382,22 @@ const services = getMoleculerServiceBroker({
       actions: {
         get: {
           params: {
-            id: ["string", {
-              type: "array",
-              items: "string",
-            }],
+            id: [
+              "string",
+              {
+                type: "array",
+                items: "string",
+              },
+            ],
           },
           handler(ctx) {
             const id = (ctx.params! as any).id;
-            if (Array.isArray(id)) { // batching
+            if (Array.isArray(id)) {
+              // batching
               // tslint:disable-next-line:no-shadowed-variable
-              return id.map(id => ({id}));
+              return id.map((id) => ({ id }));
             }
-            return {id}; // single
+            return { id }; // single
           },
         },
         noop(ctx) {

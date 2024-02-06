@@ -8,7 +8,10 @@ export type ServerApplicationComponentProps = {
 };
 
 export abstract class ServerApplicationComponent<ApplicationRoute extends Route> extends HasStaticKey {
-  constructor(protected readonly props: ServerApplicationComponentProps, opts?: any) {
+  constructor(
+    protected readonly props: ServerApplicationComponentProps,
+    opts?: any,
+  ) {
     super();
   }
 

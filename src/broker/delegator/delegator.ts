@@ -15,7 +15,10 @@ export type ServiceBrokerDelegatorProps = {
 };
 
 export abstract class ServiceBrokerDelegator<Context> extends HasStaticKey {
-  constructor(protected readonly props: ServiceBrokerDelegatorProps, opts?: any) {
+  constructor(
+    protected readonly props: ServiceBrokerDelegatorProps,
+    opts?: any,
+  ) {
     super();
   }
 

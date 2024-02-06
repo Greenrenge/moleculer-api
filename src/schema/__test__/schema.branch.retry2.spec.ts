@@ -14,14 +14,14 @@ const schema = getSchemaRegistry({
   logger: {
     level: "error",
     label: "gateway",
-    silent: false, /* YOU MIGHT MISS IT! */
+    silent: false /* YOU MIGHT MISS IT! */,
   },
-  delegator: {moleculer: {...moleculer, nodeID: "gateway"}},
+  delegator: { moleculer: { ...moleculer, nodeID: "gateway" } },
 });
 
 const remoteWrong = getMoleculerServiceBroker({
-  logger: {level: "error", label: "remote-wrong"},
-  moleculer: {...moleculer, nodeID: "remote-wrong"},
+  logger: { level: "error", label: "remote-wrong" },
+  moleculer: { ...moleculer, nodeID: "remote-wrong" },
   services: [
     MoleculerServiceSchemaFactory.echo("master", "master-c", {
       protocol: {
@@ -41,8 +41,8 @@ const remoteWrong = getMoleculerServiceBroker({
 });
 
 const remote = getMoleculerServiceBroker({
-  logger: {level: "error", label: "remote"},
-  moleculer: {...moleculer, nodeID: "remote"},
+  logger: { level: "error", label: "remote" },
+  moleculer: { ...moleculer, nodeID: "remote" },
   services: [
     MoleculerServiceSchemaFactory.echo("master", "master-b", {
       protocol: {
@@ -101,10 +101,8 @@ beforeAll(async () => {
 
 describe("Schema registry integration retry test 2", () => {
   it("branch should gathered all services regardless of integration result except disconnected one", () => {
-    const serviceIds = schema.getBranch("master")!.services.map(s => s.id);
-    expect(serviceIds).toEqual(expect.arrayContaining([
-      "master-a", "master-b",
-    ]));
+    const serviceIds = schema.getBranch("master")!.services.map((s) => s.id);
+    expect(serviceIds).toEqual(expect.arrayContaining(["master-a", "master-b"]));
     expect(serviceIds).toHaveLength(2);
   });
 
@@ -116,8 +114,5 @@ describe("Schema registry integration retry test 2", () => {
 });
 
 afterAll(async () => {
-  await Promise.all([
-    schema.stop(),
-    remote.stop(),
-  ]);
+  await Promise.all([schema.stop(), remote.stop()]);
 });

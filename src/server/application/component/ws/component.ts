@@ -35,17 +35,17 @@ export class ServerWebSocketApplication extends ServerApplicationComponent<WebSo
       pingPongCheckInterval: 5000,
     });
 
-    const {contextCreationTimeout, pingPongCheckInterval, ...serverOpts} = this.opts;
+    const { contextCreationTimeout, pingPongCheckInterval, ...serverOpts } = this.opts;
 
     // create WebSocket.Server without http.Server instance
-    const server = new ws.Server({...serverOpts, noServer: true});
+    const server = new ws.Server({ ...serverOpts, noServer: true });
 
     // attach upgrade handler which will be mounted as server protocols "upgrade" event handler
     const upgradeEventHandler: WebSocketUpgradeEventHandler = (req, tcpSocket, head) => {
       // handle upgrade with ws module and emit connection to web socket
-      server.handleUpgrade(req as any, tcpSocket, head, socket => {
+      server.handleUpgrade(req as any, tcpSocket, head, (socket) => {
         // proxy socket error to server
-        socket.on("error", error => {
+        socket.on("error", (error) => {
           if (server.listenerCount("error") > 0) {
             server.emit("error", error, socket, req);
           } else {
@@ -55,7 +55,8 @@ export class ServerWebSocketApplication extends ServerApplicationComponent<WebSo
 
         // emit CONNECTION
         server.emit("connection", socket, req);
-        if (socket.readyState !== socket.OPEN) { // close by middleware or somewhere
+        if (socket.readyState !== socket.OPEN) {
+          // close by middleware or somewhere
           return;
         }
 
@@ -83,7 +84,7 @@ export class ServerWebSocketApplication extends ServerApplicationComponent<WebSo
         clearInterval(this.pingPongCheckIntervalTimer);
       }
       this.pingPongCheckIntervalTimer = setInterval(() => {
-        server.clients.forEach(socket => {
+        server.clients.forEach((socket) => {
           if ((socket as any).__isAlive === true) {
             (socket as any).__isAlive = false;
             socket.ping();
@@ -96,7 +97,7 @@ export class ServerWebSocketApplication extends ServerApplicationComponent<WebSo
       }, pingPongCheckInterval);
     };
 
-    this.module = Object.assign(server, {upgradeEventHandler});
+    this.module = Object.assign(server, { upgradeEventHandler });
     this.module.setMaxListeners(100); // TODO: this number is quite arbitrary...
   }
 
@@ -128,7 +129,7 @@ export class ServerWebSocketApplication extends ServerApplicationComponent<WebSo
       const pathRegExps = route.getPathRegExps(pathPrefixes);
       // tslint:disable-next-line:no-shadowed-variable
       const routeHandler: WebSocketRouteInternalHandler = async (socket, req) => {
-        const {pathname, query} = url.parse(req.url || "/");
+        const { pathname, query } = url.parse(req.url || "/");
 
         for (const regExp of pathRegExps) {
           const match = regExp.exec(pathname!);
@@ -149,7 +150,7 @@ export class ServerWebSocketApplication extends ServerApplicationComponent<WebSo
 
               // req.query
               // use qs module to be along with http component: https://github.com/expressjs/express/blob/3ed5090ca91f6a387e66370d57ead94d886275e1/lib/middleware/query.js#L34
-              req.query = query ? qs.parse(query, {allowPrototypes: true}) : {};
+              req.query = query ? qs.parse(query, { allowPrototypes: true }) : {};
 
               // call handler
               route.handler(context, socket, req);

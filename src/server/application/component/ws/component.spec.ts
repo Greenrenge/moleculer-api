@@ -8,8 +8,7 @@ import { WebSocketRoute } from "./route";
 const wsApp = new ServerWebSocketApplication({
   logger: getLogger(),
 });
-const httpServer = http.createServer()
-  .on("upgrade", wsApp.module.upgradeEventHandler);
+const httpServer = http.createServer().on("upgrade", wsApp.module.upgradeEventHandler);
 
 beforeAll(async () => {
   await wsApp.start();
@@ -21,28 +20,32 @@ describe("websocket application should work with routes", () => {
     open: jest.fn(),
     message: jest.fn(),
     close: jest.fn(),
-    createContext: jest.fn(APIRequestContext.createConstructor(
-      [],
-      {
+    createContext: jest.fn(
+      APIRequestContext.createConstructor([], {
         after: (source, context) => {
           // @ts-ignore
           context.dummy = 12345;
         },
-      })),
+      }),
+    ),
   };
   let createdContext: any;
-  const message = JSON.stringify({data: Math.random() * 1000});
-  wsApp.mountRoutes([
-    new WebSocketRoute({
-      path: "/chat",
-      description: null,
-      handler: (context, socket, req) => {
-        createdContext = context;
-        socket.send(message, err => err && console.error(err));
-        socket.close();
-      },
-    }),
-  ], ["/", "/~master"], mocks.createContext);
+  const message = JSON.stringify({ data: Math.random() * 1000 });
+  wsApp.mountRoutes(
+    [
+      new WebSocketRoute({
+        path: "/chat",
+        description: null,
+        handler: (context, socket, req) => {
+          createdContext = context;
+          socket.send(message, (err) => err && console.error(err));
+          socket.close();
+        },
+      }),
+    ],
+    ["/", "/~master"],
+    mocks.createContext,
+  );
 
   const wsClient = new ws("ws://localhost:8888/chat");
   wsClient.once("open", mocks.open);

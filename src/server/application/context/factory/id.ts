@@ -20,7 +20,10 @@ export class IDContextFactory extends APIRequestContextFactory<string> {
   };
   private readonly opts: IDContextFactoryOptions;
 
-  constructor(protected readonly props: APIRequestContextFactoryProps, opts?: RecursivePartial<IDContextFactoryOptions>) {
+  constructor(
+    protected readonly props: APIRequestContextFactoryProps,
+    opts?: RecursivePartial<IDContextFactoryOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, IDContextFactory.autoLoadOptions);
     this.opts.requestIdHeaderName = this.opts.requestIdHeaderName.toLowerCase();

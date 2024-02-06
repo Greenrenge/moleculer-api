@@ -16,7 +16,10 @@ export class HelmetMiddleware extends ServerMiddleware {
   public static readonly autoLoadOptions = false;
   private readonly opts: HelmetMiddlewareOptions;
 
-  constructor(protected readonly props: ServerMiddlewareProps, opts?: RecursivePartial<HelmetMiddlewareOptions>) {
+  constructor(
+    protected readonly props: ServerMiddlewareProps,
+    opts?: RecursivePartial<HelmetMiddlewareOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, {
       // ...

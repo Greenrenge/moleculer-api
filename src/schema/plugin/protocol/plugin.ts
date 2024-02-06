@@ -19,10 +19,13 @@ export type ProtocolPluginProps = PluginProps & {
 };
 
 export abstract class ProtocolPlugin<PluginSchema extends IProtocolPluginSchema, PluginCatalog extends IProtocolPluginCatalog> extends Plugin<PluginSchema, PluginCatalog> {
-  constructor(protected readonly props: ProtocolPluginProps, opts?: any) {
+  constructor(
+    protected readonly props: ProtocolPluginProps,
+    opts?: any,
+  ) {
     super(props);
   }
 
   /* Schema integration and route generation */
-  public abstract compileSchemata(routeHashMapCache: Readonly<Map<string, Readonly<Route>>>, integrations: Readonly<ServiceAPIIntegration>[], branch: Branch): { hash: string, route: Readonly<Route> }[];
+  public abstract compileSchemata(routeHashMapCache: Readonly<Map<string, Readonly<Route>>>, integrations: Readonly<ServiceAPIIntegration>[], branch: Branch): { hash: string; route: Readonly<Route> }[];
 }

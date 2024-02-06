@@ -5,8 +5,7 @@ export type ServiceNodeProps = {
 };
 
 export class ServiceNode {
-  constructor(protected readonly props: ServiceNodeProps) {
-  }
+  constructor(protected readonly props: ServiceNodeProps) {}
 
   public get id(): string {
     return this.props.id;
@@ -25,6 +24,6 @@ export class ServiceNode {
   }
 
   public getInformation() {
-    return {...this.props};
+    return { ...this.props };
   }
 }

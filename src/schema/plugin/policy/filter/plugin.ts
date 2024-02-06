@@ -15,7 +15,10 @@ export class FilterPolicyPlugin extends PolicyPlugin<FilterPolicyPluginSchema, F
   };
   private readonly opts: FilterPolicyPluginOptions;
 
-  constructor(protected readonly props: PolicyPluginProps, opts?: RecursivePartial<FilterPolicyPluginOptions>) {
+  constructor(
+    protected readonly props: PolicyPluginProps,
+    opts?: RecursivePartial<FilterPolicyPluginOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, FilterPolicyPlugin.autoLoadOptions);
   }
@@ -34,42 +37,40 @@ export class FilterPolicyPlugin extends PolicyPlugin<FilterPolicyPluginSchema, F
     return errors;
   }
 
-  public async start(): Promise<void> {
-  }
+  public async start(): Promise<void> {}
 
-  public async stop(): Promise<void> {
-  }
+  public async stop(): Promise<void> {}
 
   // tslint:disable-next-line:ban-types
   public describeSchema(schema: Readonly<FilterPolicyPluginSchema>): FilterPolicyPluginCatalog {
     return {} as FilterPolicyPluginCatalog;
   }
 
-  public compileCallPolicySchemata(schemata: ReadonlyArray<FilterPolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): CallPolicyTester {
+  public compileCallPolicySchemata(schemata: ReadonlyArray<FilterPolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): CallPolicyTester {
     return this.compilePolicySchemata(schemata, descriptions, integration) as CallPolicyTester;
   }
 
-  public compilePublishPolicySchemata(schemata: ReadonlyArray<FilterPolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): PublishPolicyTester {
+  public compilePublishPolicySchemata(schemata: ReadonlyArray<FilterPolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): PublishPolicyTester {
     return this.compilePolicySchemata(schemata, descriptions, integration) as PublishPolicyTester;
   }
 
-  public compileSubscribePolicySchemata(schemata: ReadonlyArray<FilterPolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): SubscribePolicyTester {
+  public compileSubscribePolicySchemata(schemata: ReadonlyArray<FilterPolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): SubscribePolicyTester {
     return this.compilePolicySchemata(schemata, descriptions, integration) as SubscribePolicyTester;
   }
 
-  private compilePolicySchemata(schemata: ReadonlyArray<FilterPolicyPluginSchema>, descriptions: ReadonlyArray<string|null>, integration: Readonly<ServiceAPIIntegration>): CallPolicyTester | PublishPolicyTester | SubscribePolicyTester {
+  private compilePolicySchemata(schemata: ReadonlyArray<FilterPolicyPluginSchema>, descriptions: ReadonlyArray<string | null>, integration: Readonly<ServiceAPIIntegration>): CallPolicyTester | PublishPolicyTester | SubscribePolicyTester {
     const fnStrings = Array.from(new Set<string>(schemata));
     const descriptionsMap = new Map<(...args: any) => boolean, string[]>();
-    const testers = fnStrings.map(fnString => {
+    const testers = fnStrings.map((fnString) => {
       const fn = integration.service.broker!.createInlineFunction<{ context: any; params: any; [key: string]: any }, boolean>({
         function: fnString,
         mappableKeys: ["context", "params"],
         reporter: integration.reporter as any,
-        returnTypeCheck: v => typeof v === "boolean",
+        returnTypeCheck: (v) => typeof v === "boolean",
         returnTypeNotation: "boolean",
       });
 
-      if(!descriptionsMap.has(fn)) {
+      if (!descriptionsMap.has(fn)) {
         descriptionsMap.set(fn, []);
       }
       const desc = descriptions[schemata.indexOf(fnString)];
@@ -81,7 +82,7 @@ export class FilterPolicyPlugin extends PolicyPlugin<FilterPolicyPluginSchema, F
       return fn;
     });
 
-    return (args: Readonly<{ context: any; params: any; }>) => {
+    return (args: Readonly<{ context: any; params: any }>) => {
       for (const tester of testers) {
         let authorized = false;
         let originalError: Error | null = null;

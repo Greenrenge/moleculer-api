@@ -19,9 +19,9 @@ type ServiceAPIIntegrationProps = {
 };
 
 export class ServiceAPIIntegration {
-  public static readonly Type = {Add: "add" as "add", Remove: "remove" as "remove"};
-  public static readonly Status = {Queued: "queued" as "queued", Failed: "failed" as "failed", Succeed: "succeed" as "succeed", Skipped: "skipped" as "skipped"};
-  private static readonly StatusColor = {queued: "dim", failed: "red", succeed: "cyan", skipped: "dim"};
+  public static readonly Type = { Add: "add" as const, Remove: "remove" as const };
+  public static readonly Status = { Queued: "queued" as const, Failed: "failed" as const, Succeed: "succeed" as const, Skipped: "skipped" as const };
+  private static readonly StatusColor = { queued: "dim", failed: "red", succeed: "cyan", skipped: "dim" };
   private $status: "queued" | "failed" | "succeed" | "skipped";
   private $errors: ValidationError[] | null;
 
@@ -84,7 +84,7 @@ export class ServiceAPIIntegration {
       message: "gateway has been failed to updated",
       branch: branch.toString(),
       version: version.toString(),
-      integrations: version.integrations.map(int => int.schemaHash === this.schemaHash ? int.toString() : int.service.toString()),
+      integrations: version.integrations.map((int) => (int.schemaHash === this.schemaHash ? int.toString() : int.service.toString())),
       errors,
     });
   }
@@ -92,23 +92,26 @@ export class ServiceAPIIntegration {
   public setSucceed(branch: Readonly<Branch>, version: Readonly<Version>, updates: Readonly<string[]>): void {
     this.$status = ServiceAPIIntegration.Status.Succeed;
     version.addIntegrationHistory(this);
-    this.props.source.reporter.info({
-      message: "gateway has been updated successfully",
-      branch: branch.toString(),
-      version: {
-        from: version.parentVersion && version.parentVersion.toString(),
-        to: version.toString(),
+    this.props.source.reporter.info(
+      {
+        message: "gateway has been updated successfully",
+        branch: branch.toString(),
+        version: {
+          from: version.parentVersion && version.parentVersion.toString(),
+          to: version.toString(),
+        },
+        integrations: version.integrations
+          .filter((int) => int.status === ServiceAPIIntegration.Status.Succeed && int.type === ServiceAPIIntegration.Type.Add)
+          .map((int) => {
+            if (version.parentVersion && version.parentVersion.integrations.includes(int)) {
+              return int.service.toString();
+            }
+            return int.toString();
+          }),
+        updates,
       },
-      integrations: version.integrations
-        .filter(int => int.status === ServiceAPIIntegration.Status.Succeed && int.type === ServiceAPIIntegration.Type.Add)
-        .map(int => {
-          if (version.parentVersion && version.parentVersion.integrations.includes(int)) {
-            return int.service.toString();
-          }
-          return int.toString();
-        }),
-      updates,
-    }, "integrated:" + branch.toString());
+      "integrated:" + branch.toString(),
+    );
   }
 
   public get errors() {
@@ -118,18 +121,24 @@ export class ServiceAPIIntegration {
   public setSkipped(branch: Readonly<Branch>, version: Readonly<Version>): void {
     this.$status = ServiceAPIIntegration.Status.Skipped;
     version.addIntegrationHistory(this);
-    this.props.source.reporter.info({
-      message: "gateway found no changes",
-      branch: branch.toString(),
-      version: version.toString(),
-    }, "integration-skipped:" + branch.toString());
+    this.props.source.reporter.info(
+      {
+        message: "gateway found no changes",
+        branch: branch.toString(),
+        version: version.toString(),
+      },
+      "integration-skipped:" + branch.toString(),
+    );
   }
 
   public reportRemoved(branch: Readonly<Branch>, version: Readonly<Version>): void {
-    this.props.source.reporter.info({
-      message: "gateway removed given integrated version",
-      branch: branch.toString(),
-      version: version.toString(),
-    }, "integration-removed:" + branch.toString());
+    this.props.source.reporter.info(
+      {
+        message: "gateway removed given integrated version",
+        branch: branch.toString(),
+        version: version.toString(),
+      },
+      "integration-removed:" + branch.toString(),
+    );
   }
 }

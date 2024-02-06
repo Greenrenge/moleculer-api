@@ -12,10 +12,10 @@ const moleculer = {
 };
 
 const server = getAPIServer({
-  logger: {level: "error", label: "server"},
+  logger: { level: "error", label: "server" },
   schema: getSchemaRegistry({
-    logger: {level: "error", label: "schema"},
-    delegator: {moleculer: {...moleculer, nodeID: "gateway"}},
+    logger: { level: "error", label: "schema" },
+    delegator: { moleculer: { ...moleculer, nodeID: "gateway" } },
   }),
   opts: {
     update: {
@@ -31,10 +31,10 @@ const server = getAPIServer({
 });
 
 const serverWrong = getAPIServer({
-  logger: {level: "error", label: "server-wrong"},
+  logger: { level: "error", label: "server-wrong" },
   schema: getSchemaRegistry({
-    logger: {level: "error", label: "schema-wrong"},
-    delegator: {moleculer: {...moleculer, nodeID: "gateway-wrong"}},
+    logger: { level: "error", label: "schema-wrong" },
+    delegator: { moleculer: { ...moleculer, nodeID: "gateway-wrong" } },
     opts: {
       protocol: {
         GraphQL: {
@@ -72,38 +72,35 @@ describe("API Server should listen in given protocol", () => {
 
   it("check http protocol", () => {
     return expect(
-      fetch("http://localhost:8080/graphql", {method: "GET"})
-        .then(res => res.text())
-        .then(text => {
+      fetch("http://localhost:8080/graphql", { method: "GET" })
+        .then((res) => res.text())
+        .then((text) => {
           // console.log(text);
           return text;
         }),
-    )
-      .resolves.toBeTruthy();
+    ).resolves.toBeTruthy();
   });
 
   it("check http protocol with branch", () => {
     return expect(
-      fetch("http://localhost:8080/~master/graphql", {method: "GET"})
-        .then(res => res.text())
-        .then(text => {
+      fetch("http://localhost:8080/~master/graphql", { method: "GET" })
+        .then((res) => res.text())
+        .then((text) => {
           // console.log(text);
           return text;
         }),
-    )
-      .resolves.toBeTruthy();
+    ).resolves.toBeTruthy();
   });
 
   it("check http protocol with version", () => {
     return expect(
-      fetch(`http://localhost:8080/~master@${hash}/graphql`, {method: "GET"})
-        .then(res => res.text())
-        .then(text => {
+      fetch(`http://localhost:8080/~master@${hash}/graphql`, { method: "GET" })
+        .then((res) => res.text())
+        .then((text) => {
           // console.log(text);
           return text;
         }),
-    )
-      .resolves.toBeTruthy();
+    ).resolves.toBeTruthy();
   });
 
   it("check ws protocol", async () => {

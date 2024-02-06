@@ -29,7 +29,7 @@ const getOptions = (port: number) => ({
     },
   },
   logger: {
-    winston: {level: "error"},
+    winston: { level: "error" },
   },
 });
 
@@ -42,14 +42,13 @@ describe("Gateway should listen in given protocol", () => {
 
   it("check http protocol", () => {
     return expect(
-      fetch("http://localhost:38887/graphql", {method: "GET"})
-        .then(res => res.text())
-        .then(text => {
+      fetch("http://localhost:38887/graphql", { method: "GET" })
+        .then((res) => res.text())
+        .then((text) => {
           // console.log(text);
           return text;
         }),
-    )
-      .resolves.toBeTruthy();
+    ).resolves.toBeTruthy();
   });
 
   afterAll(async () => {
@@ -70,14 +69,13 @@ describe("Gateway should gracefully shutdown", () => {
       process.emit(SIGNAL as any, SIGNAL as any);
       await sleep(1);
       return expect(
-        fetch(`http://localhost:${port}/graphql`, {method: "GET"})
-          .then(res => res.text())
-          .then(text => {
+        fetch(`http://localhost:${port}/graphql`, { method: "GET" })
+          .then((res) => res.text())
+          .then((text) => {
             // console.log(text);
             return text;
           }),
-      )
-        .rejects.toThrowError();
+      ).rejects.toThrowError();
     });
 
     afterAll(async () => {

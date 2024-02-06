@@ -5,7 +5,7 @@ import { ServerApplicationComponentModules } from "../application/component";
 import { ServerMiddleware, ServerMiddlewareProps } from "./middleware";
 
 export type ServeStaticMiddlewareOptions = {
-  dirRootPath: string; /* may use absolute directory for production */
+  dirRootPath: string /* may use absolute directory for production */;
   routeBasePath: string;
 } & ServeStaticOptions;
 /* eg.
@@ -21,7 +21,10 @@ export class ServeStaticMiddleware extends ServerMiddleware {
   public static readonly autoLoadOptions = false;
   private readonly opts: ServeStaticMiddlewareOptions;
 
-  constructor(protected readonly props: ServerMiddlewareProps, opts?: RecursivePartial<ServeStaticMiddlewareOptions>) {
+  constructor(
+    protected readonly props: ServerMiddlewareProps,
+    opts?: RecursivePartial<ServeStaticMiddlewareOptions>,
+  ) {
     super(props);
     this.opts = _.defaultsDeep(opts || {}, {
       dirRootPath: "./public",
@@ -30,7 +33,7 @@ export class ServeStaticMiddleware extends ServerMiddleware {
   }
 
   public apply(modules: ServerApplicationComponentModules): void {
-    const {dirRootPath, routeBasePath, ...opts} = this.opts;
+    const { dirRootPath, routeBasePath, ...opts } = this.opts;
     modules.http.use(routeBasePath, serveStatic(dirRootPath, opts));
   }
 }

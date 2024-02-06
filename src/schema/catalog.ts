@@ -37,12 +37,11 @@ export class ServiceCatalog {
 
   public get(serviceId: string): ServiceCatalogItem | null {
     const items = this.serviceIdItemsMap.get(serviceId);
-    return items && items[0] || null;
+    return (items && items[0]) || null;
   }
 
   public get services(): Readonly<Service>[] {
-    return Array.from(this.serviceIdItemsMap.values())
-      .reduce((services, items) => services.concat(items.map(item => item.service)), [] as Readonly<Service>[]);
+    return Array.from(this.serviceIdItemsMap.values()).reduce((services, items) => services.concat(items.map((item) => item.service)), [] as Readonly<Service>[]);
   }
 
   public add(item: Readonly<ServiceCatalogItem>): void {
@@ -62,7 +61,7 @@ export class ServiceCatalog {
     if (!items) {
       return false;
     }
-    const itemIndex = items.findIndex(item => item.service === service);
+    const itemIndex = items.findIndex((item) => item.service === service);
     if (itemIndex === -1) {
       return false;
     }

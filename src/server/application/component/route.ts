@@ -45,8 +45,7 @@ export abstract class Route {
     return typeof path === "string" && Route.rootStaticPathRegExp.test(path);
   }
 
-  constructor(protected readonly props: RouteProps) {
-  }
+  constructor(protected readonly props: RouteProps) {}
 
   public get information() {
     return removeANSIColor(this.toString());
@@ -61,13 +60,20 @@ export abstract class Route {
   }
 
   public static mergePaths(...paths: string[]): string {
-    return "/" + paths.join("/").split("/").filter(p => !!p).join("/");
+    return (
+      "/" +
+      paths
+        .join("/")
+        .split("/")
+        .filter((p) => !!p)
+        .join("/")
+    );
   }
 
   public readonly paramKeys: PathToRegExp.Key[] = [];
   private paramKeysCollected = false;
   public getPathRegExps(prefixes: string[]): RegExp[] {
-    return prefixes.map(prefix => {
+    return prefixes.map((prefix) => {
       const path = Route.mergePaths(prefix, this.path);
       let paramKeys: PathToRegExp.Key[] | undefined;
       if (!this.paramKeysCollected) {
