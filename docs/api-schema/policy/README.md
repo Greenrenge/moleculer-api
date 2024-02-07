@@ -22,3 +22,26 @@
 
 또한 접근 제어 정책의 평가는 Gateway의 메모리에 LRU 방식으로 캐시되며 한 요청에서 중복 수행되지 않습니다. 캐시 키를 생성 할 때 요청을 정확히 구분하기 위해서 컨텍스트\(인증 정보\) 및 호출 페이로드 등의 정보가 반영됩니다.
 
+#PolicyPlugin
+
+#### D. Access Control Policy
+
+```javascript
+   },
+```
+
+The endpoints of each protocol defined above call the service broker's `call`, `publish`, and `subscribe` connectors. At this time, you can define an access control policy for each connector called.
+
+```javascript
+   policy: {
+```
+
+Access control policies are filtered by the name of `action` or `event`, depending on which connector is called first. All associated policies are applied in order. If all policies pass, the connector can be called.
+
+A way to evaluate access control policies is provided in the form of a plug-in. Basically, two methods are provided: OAuth scope method\(`scopes`\) and FBAC method\(`filter`\) using Inline JavaScript Function String.
+
+\*\*\*\*
+
+**Caching: TODO**
+
+Additionally, the evaluation of access control policies is cached in the Gateway's memory in an LRU fashion and is not performed redundantly in a single request. When generating a cache key, information such as context\(authentication information\) and call payload is reflected in order to accurately distinguish requests.

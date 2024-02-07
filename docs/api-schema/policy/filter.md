@@ -7,7 +7,7 @@
           if (action === "player.remove") {
             return context.user.player.isAdmin && context.user.player.id != params.id;
           } else if (action === "player.create") {
-            return context.user && (!context.user.player || context.user.player.isAdmin); 
+            return context.user && (!context.user.player || context.user.player.isAdmin);
           }
           return true;
         }`,
@@ -72,7 +72,7 @@
 }
 ```
 
-접근제어 플러그인을 비활성화하는 것은  위 정책을 작성하는 것과 동일합니다.
+접근제어 플러그인을 비활성화하는 것은 위 정책을 작성하는 것과 동일합니다.
 
 ```javascript
 {
@@ -86,3 +86,90 @@
 
 디버깅 중에 Inline JavaScript Function String에서 `console` 객체를 사용해 메세지를 출력하는 경우, 그 메세지는 Gateway의 VM 안에서 출력되지 않고 Gateway가 출처 노드로 전달합니다.
 
+#Filter
+
+**Filter**
+
+```javascript
+         filter: `({ action, params, context, util }) => {
+           if (action === "player.remove") {
+             return context.user.player.isAdmin && context.user.player.id != params.id;
+           } else if (action === "player.create") {
+             return context.user && (!context.user.player || context.user.player.isAdmin);
+           }
+           return true;
+         }`,
+       },
+```
+
+Next, the function is executed by injecting `action`\|`event`, `params`, `context`, and `util` according to the `filter` access control plugin, and passes if a `true` value is returned. Although FBAC is not as popular as ACL or RBAC, it can be understood as an extension model of ABAC. It is highly flexible, suitable for distributed environments, and is production-proven.
+
+The `filter` access control plugin, like the `map` connector, also runs in the Gateway's Node.js VM sandbox. If an error occurs while evaluating the `filter` function, a debug message is sent from the Gateway to the origin node and access is denied.
+
+```javascript
+       {
+         description: "player can get associated team, admin can get all the teams",
+         actions: ["team.get"],
+         scopes: ["player", "player.admin"],
+         filter: (({ action, params, context, util }) => {
+           if (context.user.player.isAdmin || params.id === context.user.player.teamId) {
+             return true;
+           }
+           return false;
+         }).toString();
+       },
+     ],
+```
+
+As shown above, the API schema of the `player` service does not necessarily call only the actions of the `player` service. Therefore, access control for actions of the `team` service exposed by the `player` API is also defined in the `player` schema.
+
+```javascript
+     publish: [
+       {
+         description: "Only admins can publish player events",
+         events: ["player.**"],
+         scopes: ["player"],
+         filter: (({ event, params, context, util }) => {
+           return context.user.player.isAdmin;
+         }).toString();
+       },
+     ],
+```
+
+Policies for `publish`, `subscribe` connectors have an `events` field written instead of `actions`.
+
+```javascript
+     subscribe: [
+       {
+         events: ["player.**"],
+         description: "Any user can receive player events",
+         scopes: ["openid"],
+       },
+     ],
+   },
+}
+```
+
+If `filter` is omitted as above, only `scopes` is applied and `filter` is evaluated as if it had passed.
+
+```javascript
+{
+   actions: ["**"],
+   scopes: ["**"],
+   filter: `() => true`,
+}
+```
+
+Disabling the access control plugin is the same as creating the policy above.
+
+```javascript
+{
+   actions: ["**"],
+   scopes: ["**"],
+   filter: `(action, params, context) => {
+     console.log("policy filter", action, params, context);
+   }`,
+}
+```
+
+During debugging, if a message is output using the `console` object in an Inline JavaScript Function String, the message is not output within the Gateway's VM but is delivered by the Gateway to the source node.

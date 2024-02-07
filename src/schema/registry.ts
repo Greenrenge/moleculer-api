@@ -436,7 +436,7 @@ export class SchemaRegistry {
 		return true;
 	}
 
-	private clearUnusedBranchesIntervalTimer?: NodeJS.Timeout;
+	private clearUnusedBranchesIntervalTimer?: ReturnType<typeof setInterval>;
 
 	private clearUnusedBranches(): void {
 		for (const branch of this.branchMap.values()) {

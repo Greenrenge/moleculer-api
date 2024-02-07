@@ -27,7 +27,7 @@ REST API 맵핑에는 `subscribe`를 제외한 `call`, `publish`, `map` 커넥�
             action: "player.get",
             params: {
               id: "@path.id",
-            },          
+            },
           },
         },
 ```
@@ -48,7 +48,7 @@ REST API 맵핑에는 `subscribe`를 제외한 `call`, `publish`, `map` 커넥�
             action: "player.get",
             params: {
               id: "@context.user.player.id",
-            },          
+            },
           },
         },
 ```
@@ -117,5 +117,125 @@ params: {
 },
 ```
 
-#### 
+####
 
+#REST
+
+#### A. REST
+
+For REST API mapping, you can use the `call`, `publish`, and `map` connectors except `subscribe`.
+
+```javascript
+     REST: {
+       basePath: "/players",
+       description: "player service REST API",
+       routes: [
+```
+
+The following REST endpoints are created based on `basePath`.
+
+`description` is used when creating a document and supports Markdown \(option\).
+
+**Call**
+
+```javascript
+         {
+           method: "GET",
+           path: "/:id",
+           deprecated: false,
+           description: "Get player information by id",
+           call: {
+             action: "player.get",
+             params: {
+               id: "@path.id",
+             },
+           },
+         },
+```
+
+The `GET /players/1` request calls the `player.get` action with a `{ id: 1 }` payload and returns the result if successful.
+
+`depreacted` is used when creating a document \(option\).
+
+You can refer to [path-to-regexp](https://github.com/pillarjs/path-to-regexp#parameters) for the rules for configuring the route path.
+
+```javascript
+         {
+           method: "GET",
+           path: "/me",
+           deprecated: false,
+           description: "Get player information of mine",
+           call: {
+             action: "player.get",
+             params: {
+               id: "@context.user.player.id",
+             },
+           },
+         },
+```
+
+A `GET /players/me` request calls the `player.get` action with a payload from the `{ id: <player.id in the authentication context> }` information and returns the result if successful.
+
+**Map**
+
+```javascript
+         {
+           method: "GET",
+           path: "/me",
+           deprecated: false,
+           description: "Get player information of mine",
+           map: `({ path, query, body, context }) => context.user.player`,
+         },
+```
+
+Alternatively, you can directly return the `player` object in the authentication context via the `map` connector \(Inline JavaScript Function String\). Inline JavaScript Function Strings, which we return to later, are interpreted in API Gateway's Node.js VM sandbox.
+
+**Publish**
+
+```javascript
+         {
+           method: "POST",
+           path: "/message",
+           deprecated: false,
+           description: "Push notifications to all players",
+           publish: {
+             event: "player.message",
+             broadcast: false;
+             params: {
+               userId: "@context.user.player.id",
+               message: "@body.message",
+             },
+           },
+         },
+```
+
+The `POST /players/1` \(body: `{ message: "blabla" }`\) request sends the `player.message` event to `{ userId: id: <player.id in the authentication context>, message: "blabla " }` `publish` with a payload and respond with the sent payload upon success.
+
+```javascript
+       ],
+     },
+```
+
+**Params**
+
+`@path`, `@body`, `@query`, and `@context` objects can be used for `params` mapping of REST API.
+
+```javascript
+// Used when passing the entire @body object as a payload or sending a stream.
+params: "@body",
+
+// Values that do not start with the @ string are not interpreted and are passed as is.
+params: {
+   foo: "@path.foo", // will bar parsed
+   bar: "query.bar", // will be "query.bar"
+   zzz: ["any", { obj: "ject", can: "be", "use": 2 }],
+},
+
+// Only properties of @query and @path objects that always have string type can be converted to boolean or number.
+params: {
+   foo: "@path.foo:number",
+   bar: "@query.bar:boolean",
+},
+```
+
+####

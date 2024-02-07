@@ -175,3 +175,179 @@ GraphQL API의 `Subscription` 타입의 필드에서는 `subscribe` 커넥터를
 
 `subscribe` 커넥터에서는 위처럼 수신된 이벤트 페이로드를 다시 `map` 커넥터로 변환 할 수 있습니다. `subscribe` 커넥터 안에서 `map` 커넥터가 사용되지 않는 경우 이벤트 객체 전체\(`source`\)를 반환합니다.
 
+#GraphQL
+
+#### B. GraphQL
+
+The `call`, `publish`, `subscribe`, and `map` connectors can be used for GraphQL API mapping.
+
+**TypeDefs**
+
+```javascript
+     GraphQL: {
+       typeDefs: `
+         """Soccer Player"""
+         type Player implements Node {
+           id: ID!
+           email: String!
+           name: String!
+           photoURL: String
+           position: String
+           """A team player belongs to"""
+           team: Team
+         }
+
+         extend type Query {
+           """Current Player"""
+           viewer: player
+           player(id: ID!): Player
+         }
+
+         extend type Subscription {
+           playerMessage: String!
+           playerUpdated: Player
+         }
+       `,
+```
+
+In the GraphQL protocol, add definitions required for the service (all types, interfaces, enumerations, etc. except `scalar`) to the `typeDefs` property or add existing types (basic types provided by API Gateway and distributed services). types\) can be expanded.
+
+**Resolvers**
+
+```javascript
+       resolvers: {
+```
+
+Below, the fields of each type are mapped to the `call`, `publish`, `subscribe`, and `map` connectors in the resolver.
+
+```javascript
+         Player: {
+```
+
+Fields that do not have a resolver assigned are injected from a property of the same name on the source object.
+
+**Call**
+
+```javascript
+           team: {
+             call: {
+               action: "team.get",
+               params: {
+                 id: "@source.teamId",
+               },
+             },
+           },
+```
+
+You can use the `publish` and `call` or `map` connectors for `Query` and `Mutation` type fields of the GraphQL API. `@source`, `@args`, `@context`, and `@info` can be used for `params` mapping.
+
+**Map**
+
+```javascript
+           position: `({ source, args, context, info }) => source.position.toUpperCase()`,
+`
+```
+
+In the GraphQL protocol, the `map` connector \(Inline JavaScript Function String\) can be simply written as `field: <FN_STRING>` instead of `field: { map: <FN_STRING> }`.
+
+```javascript
+           // be noted that special field __isTypeOf got only three arguments
+           __isTypeOf: `({ source, context, info }) => return source.someSpecialFieldForThisType != null`,
+
+           // be noted that special field __resolveType got only three arguments
+           __resolveType: `
+             ({ source, context, info }) => {
+               if (source.someSpecialFieldForThisType != null) {
+                 return "TypeA";
+               } else {
+                 return "TypeB";
+               }
+             }
+           `,
+         },
+```
+
+As above, Inline JavaScript Function String is also used for special fields to interpret Union and Interface implementation types.
+
+**Batched Call \(DataLoader\)**
+
+```javascript
+         Query: {
+           viewer: {
+             call: {
+               action: "player.get",
+               params: {
+                 id: "@context.user.player.id[]",
+               },
+             },
+           },
+           player: {
+             call: {
+               action: "player.get",
+               params: {
+                 id: "@args.id[]",
+               },
+             },
+           },
+         },
+```
+
+As above, the same action can be mapped in different ways by using `@context` containing authentication information or `@args`, a GraphQL field argument.
+
+Additionally, the `call` method is designed to allow requests to be processed in batches to avoid the N+1 queries that are prone to occur in GraphQL requests. \(ref. [Dataloader](https://github.com/graphql/dataloader)\)
+
+Supporting batching for actions that are called multiple times in one context can dramatically increase response speed. To activate batching, write the name of a field capable of batch processing in the `batchedParams` field of the `call` connector and allow the connected service action to process the argument bundle coming as an array.
+
+```text
+query {
+   viewer {
+     id
+     email
+   }
+   one: player(id: 1) {
+     id
+     email
+   }
+   two: player(id: 2) {
+     id
+     email
+   }
+   three: player(id: 3) {
+     id
+     email
+   }
+}
+```
+
+A GraphQL request like the above will call the `player.get` action only once with a payload of `{ id: [context.user.player.id, 1, 2, 3], ...(other common params) }` . If the connected action provides a response in a group of `[{ ... }, { ... }, { ... }, { ... }]`, the corresponding response is assigned to each field.
+
+If there is no player with `id: 3`, instead of raising an error and stopping the control flow while processing the batch request, the error is not raised and is included in the batch response and the remaining control flow is completed. An error object with the `isBatchError: true` property, such as `[{ ... }, { ... }, { ... }, { message: "...", isBatchError: true, ... }]` Include in your response.
+
+**Subscribe**
+
+```javascript
+         Subscription: {
+           playerMessage: {
+             subscribe: {
+               events: ["player.message"],
+             },
+           },
+```
+
+You can use the `subscribe` connector in a `Subscription` type field in the GraphQL API. Similarly, `@source`, `@args`, `@context`, and `@info` can be used for `params` mapping. The event object is mapped to `@source`.
+
+A `@source` object consists of `{ event, payload }`. Other properties may be added depending on the broker.
+
+```javascript
+           playerMessage: {
+             subscribe: {
+               events: ["player.message"],
+               map: `({ source, args, context, info }) => source.payload.message`,
+             },
+           },
+         },
+       },
+     },
+```
+
+In the `subscribe` connector, the received event payload can be converted back to the `map` connector as above. If the `map` connector is not used within the `subscribe` connector, it returns the entire event object\(`source`\).
