@@ -7,6 +7,18 @@ const serviceName = "$api";
 
 export function createMoleculerServiceSchema(props: ServiceBrokerDelegatorProps): Moleculer.ServiceSchema {
   const discoveryMap = new Map<string, Service[]>(); // nodeId -> discovered Service[]
+  const removeServiceFromDiscoveryMapAndEmitDisconnect = (ctx: Moleculer.Context) => {
+    const node = (ctx.params as any).node as Moleculer.BrokerNode;
+    const services = discoveryMap.get(node.id) || [];
+    for (const service of services) {
+      if (service.id === serviceName) {
+        continue; // will not discover "this" services
+      }
+      props.emitServiceDisconnected(service, node.id);
+    }
+    discoveryMap.delete(node.id);
+  };
+
   return {
     name: serviceName,
     events: {
@@ -35,21 +47,11 @@ export function createMoleculerServiceSchema(props: ServiceBrokerDelegatorProps)
         // broker event
         props.emitEvent({ event, params, groups, broadcast, from });
       },
-
       /* service discovery */
       "$node.updated": (ctx: any) => {
+        //remove old service
+        removeServiceFromDiscoveryMapAndEmitDisconnect(ctx);
         const node = (ctx.params as any).node as Moleculer.BrokerNode;
-
-        // remove old services
-        const oldServices = discoveryMap.get(node.id)!;
-        for (const service of oldServices) {
-          if (service.id === serviceName) {
-            continue; // will not discover "this" services
-          }
-          props.emitServiceDisconnected(service, node.id);
-        }
-        discoveryMap.delete(node.id);
-
         // add latest services
         const latestServices = proxyMoleculerServiceDiscovery(node);
         discoveryMap.set(node.id, latestServices);
@@ -71,17 +73,7 @@ export function createMoleculerServiceSchema(props: ServiceBrokerDelegatorProps)
           props.emitServiceConnected(service);
         }
       },
-      "$node.disconnected": (ctx: Moleculer.Context) => {
-        const node = (ctx.params as any).node as Moleculer.BrokerNode;
-        const services = discoveryMap.get(node.id) || [];
-        for (const service of services) {
-          if (service.id === serviceName) {
-            continue; // will not discover "this" services
-          }
-          props.emitServiceDisconnected(service, node.id);
-        }
-        discoveryMap.delete(node.id);
-      },
+      "$node.disconnected": removeServiceFromDiscoveryMapAndEmitDisconnect,
     },
   };
 }

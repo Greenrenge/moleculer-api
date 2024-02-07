@@ -433,6 +433,7 @@ export class SchemaRegistry {
     await branch.stop();
     this.branchMap.delete(branchName);
     this.props.logger.info(`${branch.name} branch has been ${force ? "manually " : "automatically"} deleted (unused for ${branch.unusedSeconds >= 60 ? `${Math.floor(branch.unusedSeconds / 60)}min` : `${branch.unusedSeconds}sec`})`);
+    this.emitter.emit(SchemaRegistry.Event.Removed, branch); // TODO: green add this line
     return true;
   }
 

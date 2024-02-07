@@ -106,7 +106,7 @@ export class ServerApplication {
             for (const version of newVersions) {
               if (!versionHandlerMap.has(version)) {
                 // prepare mount path
-                const { branchPathPrefix, versionPathPrefix } = Route;
+                const { branchPathPrefix, versionPathPrefix } = Route; // ~, @
                 const pathPrefixes: string[] = [`/${branchPathPrefix}${branch.name}${versionPathPrefix}${version.shortHash}`]; // ~dev@abcd1234
                 if (branch.latestVersion === version) {
                   pathPrefixes.unshift(`/${branchPathPrefix}${branch.name}`); // ~dev
