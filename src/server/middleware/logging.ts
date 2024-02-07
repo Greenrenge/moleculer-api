@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import * as _ from "lodash";
 import * as os from "os";
 import morgan from "morgan";

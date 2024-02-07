@@ -33,6 +33,7 @@ export abstract class Route {
     return typeof path === "string" && Route.nonRootStaticPathRegExp.test(path);
   }
 
+  // eslint-disable-next-line no-useless-escape
   public static readonly nonRootDynamicPath = /^(\/[0-9a-z_\-+=?:;~@^!$%*()\\\.,]+)+$/i;
 
   public static isNonRootDynamicPath(path: string): boolean {

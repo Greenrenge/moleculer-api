@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /*
   GraphQL Plugin default options for base schema and resolvers
 */

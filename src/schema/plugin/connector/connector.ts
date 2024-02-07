@@ -71,25 +71,25 @@ export const ConnectorCompiler = {
     // to filter request
     const ifMapper = schema.if
       ? broker.createInlineFunction<MappableArgs, boolean>({
-        function: schema.if,
-        mappableKeys: opts.explicitMappableKeys,
-        reporter: integration.reporter.getChild({
-          field: field + ".if",
-          schema: schema.if,
-        }),
-      })
+          function: schema.if,
+          mappableKeys: opts.explicitMappableKeys,
+          reporter: integration.reporter.getChild({
+            field: field + ".if",
+            schema: schema.if,
+          }),
+        })
       : null;
 
     // to map response
     const responseMapper = schema.map
       ? broker.createInlineFunction<CallConnectorResponseMappableArgs, any>({
-        function: schema.map,
-        mappableKeys: ["request", "response"],
-        reporter: integration.reporter.getChild({
-          field: field + ".map",
-          schema: schema.map,
-        }),
-      })
+          function: schema.map,
+          mappableKeys: ["request", "response"],
+          reporter: integration.reporter.getChild({
+            field: field + ".map",
+            schema: schema.map,
+          }),
+        })
       : null;
 
     // to apply access control policy plugin
@@ -180,27 +180,27 @@ export const ConnectorCompiler = {
     // to filter packet
     const packetFilter = schema.filter
       ? broker.createInlineFunction<PublishConnectorResponseMappableArgs, boolean>({
-        function: schema.filter,
-        mappableKeys: ["context", "event", "broadcast", "params"],
-        reporter: integration.reporter.getChild({
-          field: field + ".filter",
-          schema: schema.filter,
-        }),
-        // returnTypeCheck: value => typeof value === "boolean",
-        // returnTypeNotation: "boolean",
-      })
+          function: schema.filter,
+          mappableKeys: ["context", "event", "broadcast", "params"],
+          reporter: integration.reporter.getChild({
+            field: field + ".filter",
+            schema: schema.filter,
+          }),
+          // returnTypeCheck: value => typeof value === "boolean",
+          // returnTypeNotation: "boolean",
+        })
       : null;
 
     // to map response
     const responseMapper = schema.map
       ? broker.createInlineFunction<PublishConnectorResponseMappableArgs, any>({
-        function: schema.map,
-        mappableKeys: ["context", "event", "params", "groups", "broadcast"],
-        reporter: integration.reporter.getChild({
-          field: field + ".map",
-          schema: schema.map,
-        }),
-      })
+          function: schema.map,
+          mappableKeys: ["context", "event", "params", "groups", "broadcast"],
+          reporter: integration.reporter.getChild({
+            field: field + ".map",
+            schema: schema.map,
+          }),
+        })
       : null;
 
     // schema.event can be a constant (string) or inline function which should generate event names (string[])
@@ -297,27 +297,27 @@ export const ConnectorCompiler = {
     // to filter response
     const responseFilter = schema.filter
       ? broker.createInlineFunction<SubscribeConnectorResponseMappableArgs, boolean>({
-        function: schema.filter,
-        mappableKeys: ["context", "event", "broadcast", "params"],
-        reporter: integration.reporter.getChild({
-          field: field + ".filter",
-          schema: schema.filter,
-        }),
-        // returnTypeCheck: value => typeof value === "boolean",
-        // returnTypeNotation: "boolean",
-      })
+          function: schema.filter,
+          mappableKeys: ["context", "event", "broadcast", "params"],
+          reporter: integration.reporter.getChild({
+            field: field + ".filter",
+            schema: schema.filter,
+          }),
+          // returnTypeCheck: value => typeof value === "boolean",
+          // returnTypeNotation: "boolean",
+        })
       : null;
 
     // to map response
     const responseMapper = schema.map
       ? broker.createInlineFunction<SubscribeConnectorResponseMappableArgs, any>({
-        function: schema.map,
-        mappableKeys: ["context", "event", "broadcast", "params"],
-        reporter: integration.reporter.getChild({
-          field: field + ".map",
-          schema: schema.map,
-        }),
-      })
+          function: schema.map,
+          mappableKeys: ["context", "event", "broadcast", "params"],
+          reporter: integration.reporter.getChild({
+            field: field + ".map",
+            schema: schema.map,
+          }),
+        })
       : null;
 
     // schema.event can be a constant (string) or inline function which should generate event names (string[])

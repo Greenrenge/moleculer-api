@@ -10,7 +10,12 @@ import { ServiceBrokerDelegator, ServiceBrokerDelegatorProps, DelegatedCallArgs,
 import { proxyMoleculerServiceDiscovery } from "./discover";
 import { createMoleculerLoggerOptions } from "./logger";
 import { createMoleculerServiceSchema } from "./service";
-
+import { ActionCatalog, EndpointList } from "moleculer";
+declare module "moleculer" {
+  interface ActionCatalog {
+    actions: Map<string, Moleculer.EndpointList>;
+  }
+}
 export type MoleculerServiceBrokerDelegatorOwnOptions = {
   batchedCallTimeout: (itemCount: number) => number; // count -> ms
   streamingCallTimeout: number; // ms, default is one hour
@@ -322,9 +327,9 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
     }
 
     // action endpoint given
-    const candidateNodeIdMap = action.service.nodeIdMap;
-    const epList = this.broker.registry.actions.actions.get(action);
-    const endpoints = epList ? epList.endpoints.filter((ep: any) => candidateNodeIdMap.has(ep.id)) : [];
+    const candidateNodeIdMap = action.service.nodeIdMap; //Map<string, Readonly<ServiceNode>>;
+    const epList = this.broker.registry.actions.actions.get(action.id); // id is action.name
+    const endpoints = epList ? epList.endpoints.filter((ep) => candidateNodeIdMap.has(ep.id)) : [];
 
     if (endpoints.length === 0) {
       return {

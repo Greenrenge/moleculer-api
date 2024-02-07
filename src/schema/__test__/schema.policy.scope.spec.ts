@@ -1,3 +1,4 @@
+/* eslint-disable no-async-promise-executor */
 import { mockRequest, mockResponse } from "jest-mock-req-res";
 import { sleep, getMoleculerServiceBroker, getSchemaRegistry, MoleculerServiceSchemaFactory, sleepUntil } from "../../test";
 
@@ -51,7 +52,7 @@ const service1 = getMoleculerServiceBroker({
               basePath: `/echo`,
               routes: [
                 {
-                  method: "GET",
+                  method: "GET" as const,
                   path: "/foo",
                   call: {
                     action: `echo.authorized.foo`,
@@ -61,7 +62,7 @@ const service1 = getMoleculerServiceBroker({
                   },
                 },
                 {
-                  method: "GET",
+                  method: "GET" as const,
                   path: "/bar",
                   call: {
                     action: `echo.authorized.bar`,
@@ -71,7 +72,7 @@ const service1 = getMoleculerServiceBroker({
                   },
                 },
                 {
-                  method: "GET",
+                  method: "GET" as const,
                   path: "/foobar",
                   call: {
                     action: `echo.guest.fooBar`,
@@ -197,6 +198,7 @@ describe("schema policy should work", () => {
     const req = mockRequest();
     const res = mockResponse();
     await expect(
+      // eslint-disable-next-line no-async-promise-executor
       new Promise<void>(async (resolve, reject) => {
         try {
           await echoFooEndpoint.handler(ctx, req, res);

@@ -9,30 +9,30 @@ if (Symbol.asyncIterator === undefined) (Symbol as any).asyncIterator = $$asyncI
 if (Symbol.iterator === undefined) (Symbol as any).iterator = $$iterator;
 
 export type AsyncIteratorComposeItem<T> = {
-	iterator: AsyncIterator<T>;
-	filter?: (value: T) => boolean;
-	map?: (value: T) => any;
+  iterator: AsyncIterator<T>;
+  filter?: (value: T) => boolean;
+  map?: (value: T) => any;
 };
 
 export function composeAsyncIterators<T>(items: AsyncIteratorComposeItem<T>[]): AsyncIterator<any> {
-	const iterables: AsyncIterable<any>[] = [];
-	for (const { iterator, filter, map } of items) {
-		const asyncIterable: AsyncIterable<T> = {
-			[Symbol.asyncIterator](): AsyncIterator<T> {
-				return iterator;
-			},
-		};
+  const iterables: AsyncIterable<any>[] = [];
+  for (const { iterator, filter, map } of items) {
+    const asyncIterable: AsyncIterable<T> = {
+      [Symbol.asyncIterator](): AsyncIterator<T> {
+        return iterator;
+      },
+    };
 
-		const pipes: ((iterable: AsyncIterable<T>) => any)[] = [];
-		if (filter) {
-			pipes.push(filterAsyncIterable(filter));
-		}
-		if (map) {
-			pipes.push(mapAsyncIterable(map));
-		}
+    const pipes: ((iterable: AsyncIterable<T>) => any)[] = [];
+    if (filter) {
+      pipes.push(filterAsyncIterable(filter));
+    }
+    if (map) {
+      pipes.push(mapAsyncIterable(map));
+    }
 
-		const wrappedIterable = pipeAsyncIterable(...pipes)(asyncIterable); // each item produced by iterator will be passed through filter and map
-		iterables.push(wrappedIterable);
-	}
-	return mergeAsyncIterables(...iterables);
+    const wrappedIterable = pipeAsyncIterable(...pipes)(asyncIterable); // each item produced by iterator will be passed through filter and map
+    iterables.push(wrappedIterable);
+  }
+  return mergeAsyncIterables(...iterables);
 }

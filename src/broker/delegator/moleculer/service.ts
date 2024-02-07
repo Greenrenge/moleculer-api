@@ -19,6 +19,9 @@ export function createMoleculerServiceSchema(props: ServiceBrokerDelegatorProps)
         }
 
         const params = ctx.params;
+        //ctx.eventGroups	Array<String>	Groups of event.
+        //ctx.eventType	String	Type of event (“emit” or “broadcast”).
+
         const groups = ctx.eventGroups ? (Array.isArray(ctx.eventGroups) ? ctx.eventGroups : [ctx.eventGroups]) : ctx.eventType === "broadcastLocal" ? [serviceName] : [];
         const broadcast = ctx.eventType === "broadcast";
 

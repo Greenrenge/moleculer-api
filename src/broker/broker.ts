@@ -11,25 +11,25 @@ import { createInlineFunction, InlineFunctionOptions, InlineFunctionProps } from
 import { ServiceBrokerDelegatorConstructors, ServiceBrokerDelegatorConstructorOptions, ServiceBrokerDelegator } from "./delegator";
 
 export type ServiceBrokerOptions = {
-	registry: ServiceRegistryOptions;
-	batching: BatchingPoolOptions;
-	function: InlineFunctionOptions;
-	reporter: ReporterOptions;
-	log: {
-		event: boolean;
-		call: boolean;
-	};
+  registry: ServiceRegistryOptions;
+  batching: BatchingPoolOptions;
+  function: InlineFunctionOptions;
+  reporter: ReporterOptions;
+  log: {
+    event: boolean;
+    call: boolean;
+  };
 } & ServiceBrokerDelegatorConstructorOptions;
 
 export type ServiceBrokerProps = {
-	id: string;
-	logger: Logger;
+  id: string;
+  logger: Logger;
 };
 
 export type ServiceBrokerListeners = {
-	connected: (service: Readonly<Service>) => void;
-	disconnected: (service: Readonly<Service>) => void;
-	nodePoolUpdated: (service: Readonly<Service>) => void;
+  connected: (service: Readonly<Service>) => void;
+  disconnected: (service: Readonly<Service>) => void;
+  nodePoolUpdated: (service: Readonly<Service>) => void;
 };
 
 export type CallArgs = { action: Readonly<ServiceAction>; params?: any; batchingParams?: any; disableCache: boolean };
@@ -38,342 +38,342 @@ export type DelegatedCallArgs = Omit<CallArgs, "batchingParams"> & { node: Reado
 export type DelegatedEventPublishArgs = EventPublishArgs;
 
 export class ServiceBroker<DelegatorContext = any> {
-	private readonly registry: ServiceRegistry;
-	private readonly delegator: ServiceBrokerDelegator<DelegatorContext>;
-	private readonly delegatorSymbol: symbol;
-	private readonly discoveryPubSub: DiscoveryPubSub;
-	private readonly eventPubSub: EventPubSub;
-	private readonly opts: RecursivePartial<ServiceBrokerOptions>;
+  private readonly registry: ServiceRegistry;
+  private readonly delegator: ServiceBrokerDelegator<DelegatorContext>;
+  private readonly delegatorSymbol: symbol;
+  private readonly discoveryPubSub: DiscoveryPubSub;
+  private readonly eventPubSub: EventPubSub;
+  private readonly opts: RecursivePartial<ServiceBrokerOptions>;
 
-	constructor(
-		protected readonly props: ServiceBrokerProps,
-		opts?: RecursivePartial<ServiceBrokerOptions>,
-	) {
-		// save options
-		this.opts = _.defaultsDeep(opts || {}, {
-			log: {
-				event: true,
-				call: true,
-			},
-		});
+  constructor(
+    protected readonly props: ServiceBrokerProps,
+    opts?: RecursivePartial<ServiceBrokerOptions>,
+  ) {
+    // save options
+    this.opts = _.defaultsDeep(opts || {}, {
+      log: {
+        event: true,
+        call: true,
+      },
+    });
 
-		// create delegator from options
-		const delegatorKeys = Object.keys(ServiceBrokerDelegatorConstructors);
+    // create delegator from options
+    const delegatorKeys = Object.keys(ServiceBrokerDelegatorConstructors);
 
-		let delegatorKey = delegatorKeys.find((k) => !!this.opts[k as keyof ServiceBrokerDelegatorConstructorOptions]);
+    let delegatorKey = delegatorKeys.find((k) => !!this.opts[k as keyof ServiceBrokerDelegatorConstructorOptions]);
 
-		if (!delegatorKey) {
-			delegatorKey = delegatorKeys[0];
-			this.props.logger.info(`available delegator options are not specified: use ${delegatorKey} delegator`);
-		}
-		const key = delegatorKey as keyof ServiceBrokerDelegatorConstructorOptions;
-		const DelegatorClass = ServiceBrokerDelegatorConstructors[key];
+    if (!delegatorKey) {
+      delegatorKey = delegatorKeys[0];
+      this.props.logger.info(`available delegator options are not specified: use ${delegatorKey} delegator`);
+    }
+    const key = delegatorKey as keyof ServiceBrokerDelegatorConstructorOptions;
+    const DelegatorClass = ServiceBrokerDelegatorConstructors[key];
 
-		this.delegator = new DelegatorClass(
-			{
-				logger: this.props.logger.getChild(key),
-				emitEvent: this.emitEvent.bind(this),
-				emitServiceConnected: this.emitServiceConnected.bind(this),
-				emitServiceDisconnected: this.emitServiceDisconnected.bind(this),
-			},
-			this.opts[key] || {},
-		);
+    this.delegator = new DelegatorClass(
+      {
+        logger: this.props.logger.getChild(key),
+        emitEvent: this.emitEvent.bind(this),
+        emitServiceConnected: this.emitServiceConnected.bind(this),
+        emitServiceDisconnected: this.emitServiceDisconnected.bind(this),
+      },
+      this.opts[key] || {},
+    );
 
-		this.delegatorSymbol = Symbol(`BrokerDelegator:${this.props.id}`);
+    this.delegatorSymbol = Symbol(`BrokerDelegator:${this.props.id}`);
 
-		// create event buses
-		this.eventPubSub = new EventPubSub({
-			onError: (error) => this.props.logger.error(error),
-			// eventNamePatternResolver: this.delegator.eventNameResolver,
-			maxListeners: Infinity,
-		});
+    // create event buses
+    this.eventPubSub = new EventPubSub({
+      onError: (error) => this.props.logger.error(error),
+      // eventNamePatternResolver: this.delegator.eventNameResolver,
+      maxListeners: Infinity,
+    });
 
-		this.discoveryPubSub = new DiscoveryPubSub({
-			onError: (error) => this.props.logger.error(error),
-		});
+    this.discoveryPubSub = new DiscoveryPubSub({
+      onError: (error) => this.props.logger.error(error),
+    });
 
-		// create registry
-		this.registry = new ServiceRegistry(
-			{
-				logger: this.props.logger.getChild("registry"),
-			},
-			this.opts.registry,
-		);
-	}
+    // create registry
+    this.registry = new ServiceRegistry(
+      {
+        logger: this.props.logger.getChild("registry"),
+      },
+      this.opts.registry,
+    );
+  }
 
-	/* lifecycle */
-	private working = false;
+  /* lifecycle */
+  private working = false;
 
-	public get delegatedBroker(): any {
-		return this.delegator.broker;
-	}
+  public get delegatedBroker(): any {
+    return this.delegator.broker;
+  }
 
-	public async start(listeners: ServiceBrokerListeners): Promise<void> {
-		this.working = true;
-		await this.discoveryPubSub.subscribeAll(listeners);
-		await this.registry.start();
-		await this.delegator.start();
-		this.props.logger.info(`service broker has been started: ${this.delegator.key}`);
-	}
+  public async start(listeners: ServiceBrokerListeners): Promise<void> {
+    this.working = true;
+    await this.discoveryPubSub.subscribeAll(listeners);
+    await this.registry.start();
+    await this.delegator.start();
+    this.props.logger.info(`service broker has been started: ${this.delegator.key}`);
+  }
 
-	public async stop(): Promise<void> {
-		this.working = false;
-		await this.registry.stop();
-		this.discoveryPubSub.unsubscribeAll();
-		this.eventPubSub.unsubscribeAll();
-		await this.delegator.stop();
-		this.props.logger.info(`service broker has been stopped`);
-	}
+  public async stop(): Promise<void> {
+    this.working = false;
+    await this.registry.stop();
+    this.discoveryPubSub.unsubscribeAll();
+    this.eventPubSub.unsubscribeAll();
+    await this.delegator.stop();
+    this.props.logger.info(`service broker has been stopped`);
+  }
 
-	/*
+  /*
     protected methods for brokering discovery and events by delegator
   */
-	protected async emitEvent(packet: EventPacket): Promise<void> {
-		if (!this.working) {
-			return;
-		}
+  protected async emitEvent(packet: EventPacket): Promise<void> {
+    if (!this.working) {
+      return;
+    }
 
-		// publish and store
-		await this.eventPubSub.publish(packet.event, packet);
-		this.registry.addEventExample([packet.event], packet);
+    // publish and store
+    await this.eventPubSub.publish(packet.event, packet);
+    this.registry.addEventExample([packet.event], packet);
 
-		// log
-		this.props.logger[this.opts.log!.event! ? "info" : "debug"](`received ${packet.event} ${packet.broadcast ? "broadcast " : ""}event from ${packet.from || "unknown"}`);
-	}
+    // log
+    this.props.logger[this.opts.log!.event! ? "info" : "debug"](`received ${packet.event} ${packet.broadcast ? "broadcast " : ""}event from ${packet.from || "unknown"}`);
+  }
 
-	protected async emitServiceConnected(service: Service): Promise<void> {
-		if (!this.working) {
-			return;
-		}
-		if (!(service instanceof Service) || !service.id) {
-			// unrecognized service
-			this.props.logger.error(`service broker discovered a unrecognized service: ${service}`);
-			return;
-		}
-		const foundService = this.registry.findServiceByHash(service.hash);
-		if (foundService) {
-			// node pool updated
-			for (const node of service.nodeIdMap.values()) {
-				foundService.addNode(node);
-			}
-			await this.discoveryPubSub.publish("nodePoolUpdated", service);
-		} else {
-			// new service connected
-			service.setBroker(this);
-			this.registry.addService(service);
-			await this.discoveryPubSub.publish("connected", service);
-		}
-	}
+  protected async emitServiceConnected(service: Service): Promise<void> {
+    if (!this.working) {
+      return;
+    }
+    if (!(service instanceof Service) || !service.id) {
+      // unrecognized service
+      this.props.logger.error(`service broker discovered a unrecognized service: ${service}`);
+      return;
+    }
+    const foundService = this.registry.findServiceByHash(service.hash);
+    if (foundService) {
+      // node pool updated
+      for (const node of service.nodeIdMap.values()) {
+        foundService.addNode(node);
+      }
+      await this.discoveryPubSub.publish("nodePoolUpdated", service);
+    } else {
+      // new service connected
+      service.setBroker(this);
+      this.registry.addService(service);
+      await this.discoveryPubSub.publish("connected", service);
+    }
+  }
 
-	protected async emitServiceDisconnected(service: Service, nodeId: string): Promise<void> {
-		if (!this.working) {
-			return;
-		}
-		const foundService = this.registry.findServiceByHash(service.hash);
-		if (!foundService || !foundService.nodeIdMap.delete(nodeId)) {
-			// unknown service
-			this.props.logger.error(`service broker has been disconnected from non-registered service node: ${service} (${nodeId})`);
-		} else if (foundService.nodeIdMap.size === 0) {
-			// service disconnected
-			this.registry.removeServiceByHash(foundService.hash);
-			await this.discoveryPubSub.publish("disconnected", foundService);
-		} else {
-			// node pool updated
-			await this.discoveryPubSub.publish("nodePoolUpdated", foundService);
-		}
-	}
+  protected async emitServiceDisconnected(service: Service, nodeId: string): Promise<void> {
+    if (!this.working) {
+      return;
+    }
+    const foundService = this.registry.findServiceByHash(service.hash);
+    if (!foundService || !foundService.nodeIdMap.delete(nodeId)) {
+      // unknown service
+      this.props.logger.error(`service broker has been disconnected from non-registered service node: ${service} (${nodeId})`);
+    } else if (foundService.nodeIdMap.size === 0) {
+      // service disconnected
+      this.registry.removeServiceByHash(foundService.hash);
+      await this.discoveryPubSub.publish("disconnected", foundService);
+    } else {
+      // node pool updated
+      await this.discoveryPubSub.publish("nodePoolUpdated", foundService);
+    }
+  }
 
-	/* context resource management */
-	private getDelegatorContext(context: APIRequestContext): DelegatorContext {
-		let delegatorContext: DelegatorContext | undefined = context.get(this.delegatorSymbol);
-		if (!delegatorContext) {
-			delegatorContext = this.delegator.createContext(context);
-			context.set(this.delegatorSymbol, delegatorContext, (ctx) => this.delegator.clearContext(ctx));
-		}
-		return delegatorContext;
-	}
+  /* context resource management */
+  private getDelegatorContext(context: APIRequestContext): DelegatorContext {
+    let delegatorContext: DelegatorContext | undefined = context.get(this.delegatorSymbol);
+    if (!delegatorContext) {
+      delegatorContext = this.delegator.createContext(context);
+      context.set(this.delegatorSymbol, delegatorContext, (ctx) => this.delegator.clearContext(ctx));
+    }
+    return delegatorContext;
+  }
 
-	private static EventSubscriptionSymbol = Symbol("BrokerEventSubscriptions");
+  private static EventSubscriptionSymbol = Symbol("BrokerEventSubscriptions");
 
-	private getEventSubscriptions(context: APIRequestContext): (number | AsyncIterator<EventPacket>)[] {
-		let subscriptions: (number | AsyncIterator<EventPacket>)[] | undefined = context.get(ServiceBroker.EventSubscriptionSymbol);
-		if (!subscriptions) {
-			subscriptions = [];
-			context.set(ServiceBroker.EventSubscriptionSymbol, subscriptions, (subs) => {
-				for (const sub of subs) {
-					this.unsubscribeEvent(sub);
-				}
-			});
-		}
-		return subscriptions;
-	}
+  private getEventSubscriptions(context: APIRequestContext): (number | AsyncIterator<EventPacket>)[] {
+    let subscriptions: (number | AsyncIterator<EventPacket>)[] | undefined = context.get(ServiceBroker.EventSubscriptionSymbol);
+    if (!subscriptions) {
+      subscriptions = [];
+      context.set(ServiceBroker.EventSubscriptionSymbol, subscriptions, (subs) => {
+        for (const sub of subs) {
+          this.unsubscribeEvent(sub);
+        }
+      });
+    }
+    return subscriptions;
+  }
 
-	private static BatchingPoolSymbol = Symbol("BrokerBatchingPool");
+  private static BatchingPoolSymbol = Symbol("BrokerBatchingPool");
 
-	private getBatchingPool(context: APIRequestContext): BatchingPool {
-		let batchingPool: BatchingPool | undefined = context.get(ServiceBroker.BatchingPoolSymbol);
-		if (!batchingPool) {
-			batchingPool = new BatchingPool(this.opts.batching);
-			context.set(ServiceBroker.BatchingPoolSymbol, batchingPool, (pool) => {
-				pool.clear();
-			});
-		}
-		return batchingPool;
-	}
+  private getBatchingPool(context: APIRequestContext): BatchingPool {
+    let batchingPool: BatchingPool | undefined = context.get(ServiceBroker.BatchingPoolSymbol);
+    if (!batchingPool) {
+      batchingPool = new BatchingPool(this.opts.batching);
+      context.set(ServiceBroker.BatchingPoolSymbol, batchingPool, (pool) => {
+        pool.clear();
+      });
+    }
+    return batchingPool;
+  }
 
-	/* action call */
-	public async call(context: APIRequestContext, args: CallArgs): Promise<any> {
-		const ctx = this.getDelegatorContext(context);
-		const { action, params, batchingParams, disableCache } = args;
-		const node = this.delegator.selectActionTargetNode(ctx, action)!;
-		// console.assert(node && action, "there are no available nodes to call the action");
+  /* action call */
+  public async call(context: APIRequestContext, args: CallArgs): Promise<any> {
+    const ctx = this.getDelegatorContext(context);
+    const { action, params, batchingParams, disableCache } = args;
+    const node = this.delegator.selectActionTargetNode(ctx, action)!;
+    // console.assert(node && action, "there are no available nodes to call the action");
 
-		// do batching
-		if (batchingParams) {
-			const batchingPool = this.getBatchingPool(context);
-			const batchingParamNames = Object.keys(batchingParams);
-			const batchingKey = batchingPool.getBatchingKey({ action: action.id, params, batchingParamNames });
+    // do batching
+    if (batchingParams) {
+      const batchingPool = this.getBatchingPool(context);
+      const batchingParamNames = Object.keys(batchingParams);
+      const batchingKey = batchingPool.getBatchingKey({ action: action.id, params, batchingParamNames });
 
-			// set batching handler for this call
-			if (!batchingPool.hasBatchingHandler(batchingKey)) {
-				// or register job
-				batchingPool.setBatchingHandler(batchingKey, async (batchingParamsList: readonly any[]) => {
-					// merge common params with batching params
-					const mergedParams = (params || {}) as any;
-					for (const batchingParamName of batchingParamNames) {
-						mergedParams[batchingParamName] = [];
-					}
+      // set batching handler for this call
+      if (!batchingPool.hasBatchingHandler(batchingKey)) {
+        // or register job
+        batchingPool.setBatchingHandler(batchingKey, async (batchingParamsList: readonly any[]) => {
+          // merge common params with batching params
+          const mergedParams = (params || {}) as any;
+          for (const batchingParamName of batchingParamNames) {
+            mergedParams[batchingParamName] = [];
+          }
 
-					for (const bParams of batchingParamsList) {
-						for (const [k, v] of Object.entries(bParams)) {
-							mergedParams[k].push(v);
-						}
-					}
+          for (const bParams of batchingParamsList) {
+            for (const [k, v] of Object.entries(bParams)) {
+              mergedParams[k].push(v);
+            }
+          }
 
-					// log in advance
-					this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${"@"}${node} ${batchingParamsList.length} times in a batch from ${(context.id || "unknown") + "@" + (context.ip || "unknown")}`);
+          // log in advance
+          this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${"@"}${node} ${batchingParamsList.length} times in a batch from ${(context.id || "unknown") + "@" + (context.ip || "unknown")}`);
 
-					// do batching call
-					const response = await this.delegator.call(ctx, { action, node, params: mergedParams, disableCache, batchedParamsLength: batchingParamsList.length });
-					this.registry.addActionExample({ action, params: mergedParams, response });
-					return response;
-				});
-			}
+          // do batching call
+          const response = await this.delegator.call(ctx, { action, node, params: mergedParams, disableCache, batchedParamsLength: batchingParamsList.length });
+          this.registry.addActionExample({ action, params: mergedParams, response });
+          return response;
+        });
+      }
 
-			// add batch entry and wait response
-			return batchingPool.batch(batchingKey, batchingParams);
-		} else {
-			// log in advance
-			this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${"@"}${node} from ${context.id || "unknown" + "@" + (context.ip || "unknown")}`);
+      // add batch entry and wait response
+      return batchingPool.batch(batchingKey, batchingParams);
+    } else {
+      // log in advance
+      this.props.logger[this.opts.log!.call! ? "info" : "debug"](`call ${action}${"@"}${node} from ${context.id || "unknown" + "@" + (context.ip || "unknown")}`);
 
-			// normal request
-			const response = await this.delegator.call(ctx, { action, node, params, disableCache });
-			this.registry.addActionExample({ action, params, response });
-			return response;
-		}
-	}
+      // normal request
+      const response = await this.delegator.call(ctx, { action, node, params, disableCache });
+      this.registry.addActionExample({ action, params, response });
+      return response;
+    }
+  }
 
-	/* action call cache */
-	public async clearActionCache(action: Readonly<ServiceAction>): Promise<void> {
-		if (await this.delegator.clearActionCache(action)) {
-			this.props.logger.info(`${action} action caches have been cleared`);
-		}
-	}
+  /* action call cache */
+  public async clearActionCache(action: Readonly<ServiceAction>): Promise<void> {
+    if (await this.delegator.clearActionCache(action)) {
+      this.props.logger.info(`${action} action caches have been cleared`);
+    }
+  }
 
-	public async clearServiceCache(service: Readonly<Service>): Promise<void> {
-		if (await this.delegator.clearServiceCache(service)) {
-			this.props.logger.info(`${service} service caches have been cleared`);
-		}
-	}
+  public async clearServiceCache(service: Readonly<Service>): Promise<void> {
+    if (await this.delegator.clearServiceCache(service)) {
+      this.props.logger.info(`${service} service caches have been cleared`);
+    }
+  }
 
-	public async clearAllCache(): Promise<void> {
-		if (await this.delegator.clearAllCache()) {
-			this.props.logger.info(`all caches have been cleared`);
-		}
-	}
+  public async clearAllCache(): Promise<void> {
+    if (await this.delegator.clearAllCache()) {
+      this.props.logger.info(`all caches have been cleared`);
+    }
+  }
 
-	/* event pub/sub */
-	public async subscribeEvent<Listener extends EventListener | null>(context: APIRequestContext, eventNamePattern: string, listener: Listener): Promise<Listener extends EventListener ? void : AsyncIterator<Readonly<EventPacket>>> {
-		const subscriptions = this.getEventSubscriptions(context);
+  /* event pub/sub */
+  public async subscribeEvent<Listener extends EventListener | null>(context: APIRequestContext, eventNamePattern: string, listener: Listener): Promise<Listener extends EventListener ? void : AsyncIterator<Readonly<EventPacket>>> {
+    const subscriptions = this.getEventSubscriptions(context);
 
-		if (listener) {
-			subscriptions.push(...(await this.eventPubSub.subscribe(eventNamePattern, listener!)));
-			return undefined as any;
-		}
+    if (listener) {
+      subscriptions.push(...(await this.eventPubSub.subscribe(eventNamePattern, listener!)));
+      return undefined as any;
+    }
 
-		// returns event packet async iterator when no listener given
-		const iterator = this.eventPubSub.asyncIterator(eventNamePattern);
-		subscriptions.push(iterator);
-		return iterator as any;
-	}
+    // returns event packet async iterator when no listener given
+    const iterator = this.eventPubSub.asyncIterator(eventNamePattern);
+    subscriptions.push(iterator);
+    return iterator as any;
+  }
 
-	public async unsubscribeEvent(subscription: number | AsyncIterator<EventPacket>): Promise<void> {
-		if (typeof subscription === "number") {
-			this.eventPubSub.unsubscribe(subscription);
-		} else if (subscription.return) {
-			await subscription.return();
-		}
-	}
+  public async unsubscribeEvent(subscription: number | AsyncIterator<EventPacket>): Promise<void> {
+    if (typeof subscription === "number") {
+      this.eventPubSub.unsubscribe(subscription);
+    } else if (subscription.return) {
+      await subscription.return();
+    }
+  }
 
-	public async publishEvent(context: APIRequestContext, args: EventPublishArgs): Promise<void> {
-		const ctx = this.getDelegatorContext(context);
-		await this.delegator.publish(ctx, args);
+  public async publishEvent(context: APIRequestContext, args: EventPublishArgs): Promise<void> {
+    const ctx = this.getDelegatorContext(context);
+    await this.delegator.publish(ctx, args);
 
-		// add from information to original packet and store as example
-		const packet: EventPacket = args;
-		packet.from = `${context.id || "unknown"}@${context.ip || "unknown"}`;
-		this.registry.addEventExample([args.event], packet);
+    // add from information to original packet and store as example
+    const packet: EventPacket = args;
+    packet.from = `${context.id || "unknown"}@${context.ip || "unknown"}`;
+    this.registry.addEventExample([args.event], packet);
 
-		// log
-		this.props.logger[this.opts.log!.event! ? "info" : "debug"](`published ${packet.event} ${packet.broadcast ? "broadcast " : ""}event from ${packet.from!}`);
-	}
+    // log
+    this.props.logger[this.opts.log!.event! ? "info" : "debug"](`published ${packet.event} ${packet.broadcast ? "broadcast " : ""}event from ${packet.from!}`);
+  }
 
-	/* params mapper */
-	public createParamsMapper<MappableArgs extends { [key: string]: any }>(opts: ParamsMapperProps): ParamsMapper<MappableArgs> {
-		return new ParamsMapper<MappableArgs>(opts);
-	}
+  /* params mapper */
+  public createParamsMapper<MappableArgs extends { [key: string]: any }>(opts: ParamsMapperProps): ParamsMapper<MappableArgs> {
+    return new ParamsMapper<MappableArgs>(opts);
+  }
 
-	/* compile inline function string */
-	public createInlineFunction<MappableArgs extends { [key: string]: any }, Return>(props: InlineFunctionProps<MappableArgs, Return>): (args: MappableArgs) => Return {
-		return createInlineFunction<MappableArgs, Return>(props, this.opts.function);
-	}
+  /* compile inline function string */
+  public createInlineFunction<MappableArgs extends { [key: string]: any }, Return>(props: InlineFunctionProps<MappableArgs, Return>): (args: MappableArgs) => Return {
+    return createInlineFunction<MappableArgs, Return>(props, this.opts.function);
+  }
 
-	/* service reporter */
-	public createReporter(service: Readonly<Service>): Reporter {
-		return new Reporter(
-			{
-				logger: this.props.logger.getChild(`${service}\n`),
-				service,
-				props: null,
-				send: (messages, table) => this.delegator.report(service, messages, table),
-			},
-			this.opts.reporter,
-		);
-	}
+  /* service reporter */
+  public createReporter(service: Readonly<Service>): Reporter {
+    return new Reporter(
+      {
+        logger: this.props.logger.getChild(`${service}\n`),
+        service,
+        props: null,
+        send: (messages, table) => this.delegator.report(service, messages, table),
+      },
+      this.opts.reporter,
+    );
+  }
 
-	/* pattern matching for action and event names */
-	public matchActionName(name: string, namePattern: string): boolean {
-		return this.delegator.matchActionName(name, namePattern);
-	}
+  /* pattern matching for action and event names */
+  public matchActionName(name: string, namePattern: string): boolean {
+    return this.delegator.matchActionName(name, namePattern);
+  }
 
-	public matchEventName(name: string, namePattern: string): boolean {
-		return this.delegator.matchEventName(name, namePattern);
-	}
+  public matchEventName(name: string, namePattern: string): boolean {
+    return this.delegator.matchEventName(name, namePattern);
+  }
 
-	/* health check */
-	public healthCheckService(service: Readonly<Service>) {
-		return this.delegator.healthCheckService(service);
-	}
+  /* health check */
+  public healthCheckService(service: Readonly<Service>) {
+    return this.delegator.healthCheckService(service);
+  }
 
-	public healthCheckCall(action: Readonly<ServiceAction>) {
-		return this.delegator.healthCheckCall(action);
-	}
+  public healthCheckCall(action: Readonly<ServiceAction>) {
+    return this.delegator.healthCheckCall(action);
+  }
 
-	public healthCheckPublish(args: Omit<EventPublishArgs, "params">) {
-		return this.delegator.healthCheckPublish(args);
-	}
+  public healthCheckPublish(args: Omit<EventPublishArgs, "params">) {
+    return this.delegator.healthCheckPublish(args);
+  }
 
-	public healthCheckSubscribe() {
-		return this.delegator.healthCheckSubscribe();
-	}
+  public healthCheckSubscribe() {
+    return this.delegator.healthCheckSubscribe();
+  }
 }

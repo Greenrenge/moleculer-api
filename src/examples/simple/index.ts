@@ -4,7 +4,8 @@ import MemoryStream from "memorystream";
 import ReadableStream = NodeJS.ReadableStream;
 import { APIGateway, createAuthContextOIDCParser } from "../../";
 import { getMoleculerServiceBroker } from "../../test";
-
+import { RESTRouteSchema } from "src/schema/plugin";
+// const a :
 /* create gateway and run */
 const gateway = new APIGateway({
   brokers: [
@@ -240,7 +241,7 @@ const services = getMoleculerServiceBroker({
               basePath: "/file",
               routes: [
                 {
-                  method: "POST",
+                  method: "POST" as const,
                   path: "/",
                   call: {
                     action: "file.upload",
@@ -248,7 +249,7 @@ const services = getMoleculerServiceBroker({
                   },
                 },
                 {
-                  method: "GET",
+                  method: "GET" as const,
                   path: "/:filename",
                   call: {
                     action: "file.get",
@@ -305,12 +306,12 @@ const services = getMoleculerServiceBroker({
               basePath: "/foo",
               routes: [
                 {
-                  method: "GET",
+                  method: "GET" as const,
                   path: "/bar",
                   map: `() => { throw new Error("what an error"); }`,
                 },
                 {
-                  method: "GET",
+                  method: "GET" as const,
                   path: "/:id",
                   call: {
                     action: "foo.get",
@@ -318,7 +319,7 @@ const services = getMoleculerServiceBroker({
                   },
                 },
                 {
-                  method: "GET",
+                  method: "GET" as const,
                   path: "/:a/:b/:c?",
                   map: `(args) => args`,
                 },

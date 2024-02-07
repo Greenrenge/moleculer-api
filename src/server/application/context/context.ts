@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
+/* eslint-disable no-prototype-builtins */
 import qs from "qs";
 import * as url from "url";
 import { APIRequestContextFactory, APIRequestContextProps, APIRequestContextSource } from "./index";
