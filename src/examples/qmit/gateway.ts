@@ -1,5 +1,5 @@
 import url from "url";
-import { moleculer } from "qmit-sdk";
+import { moleculer } from "../../moleculer-utils/moleculer";
 import { config } from "./config";
 import { APIGateway, Logger } from "../../";
 import { ApolloError } from "apollo-server-core";

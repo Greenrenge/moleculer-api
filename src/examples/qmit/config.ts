@@ -1,4 +1,3 @@
-import { context, vault } from "qmit-sdk";
 import "dotenv/config";
 // create global configuration
 // can fetch vault secrets in local/kubernetes environment
