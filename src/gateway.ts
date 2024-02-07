@@ -7,122 +7,123 @@ import { APIServer, APIServerOptions } from "./server";
 import { Logger, LoggerConstructors, LoggerConstructorOptions } from "./logger";
 
 export type APIGatewayOptions = {
-  brokers?: RecursivePartial<ServiceBrokerOptions>[];
-  schema?: RecursivePartial<SchemaRegistryOptions>;
-  server?: RecursivePartial<APIServerOptions>;
-  logger?: LoggerConstructorOptions;
+	brokers?: RecursivePartial<ServiceBrokerOptions>[];
+	schema?: RecursivePartial<SchemaRegistryOptions>;
+	server?: RecursivePartial<APIServerOptions>;
+	logger?: LoggerConstructorOptions;
 } & RecursivePartial<APIGatewayOwnOptions>;
 
 type APIGatewayOwnOptions = {
-  skipProcessEventRegistration?: boolean;
+	skipProcessEventRegistration?: boolean;
 };
 
 export class APIGateway {
-  public readonly brokers: ServiceBroker[];
-  private readonly schema: SchemaRegistry;
-  private readonly server: APIServer;
-  private readonly logger: Logger;
-  private readonly opts: APIGatewayOwnOptions;
+	public readonly brokers: ServiceBroker[];
+	private readonly schema: SchemaRegistry;
+	private readonly server: APIServer;
+	private readonly logger: Logger;
+	private readonly opts: APIGatewayOwnOptions;
 
-  constructor(opts?: APIGatewayOptions) {
-    const { brokers, schema, server, logger, ...ownOpts } = opts || {};
+	constructor(opts?: APIGatewayOptions) {
+		const { brokers, schema, server, logger, ...ownOpts } = opts || {};
 
-    // arrange own options
-    this.opts = _.defaultsDeep(ownOpts, {
-      skipProcessEventRegistration: false,
-    });
+		// arrange own options
+		this.opts = _.defaultsDeep(ownOpts, {
+			skipProcessEventRegistration: false,
+		});
 
-    // create logger
-    const loggerKeys = Object.keys(LoggerConstructors);
-    let loggerKey = logger && loggerKeys.find((type) => !!logger[type as keyof LoggerConstructorOptions]);
-    if (!loggerKey) {
-      loggerKey = loggerKeys[0];
-    }
-    const loggerOpts = (logger && logger[loggerKey as keyof LoggerConstructorOptions]) || {};
-    const loggerConstructor = LoggerConstructors[loggerKey as keyof LoggerConstructorOptions];
-    this.logger = new loggerConstructor({ label: os.hostname() }, loggerOpts);
+		// create logger
+		const loggerKeys = Object.keys(LoggerConstructors);
+		let loggerKey = logger && loggerKeys.find((type) => !!logger[type as keyof LoggerConstructorOptions]); // { winston: { ... } }
+		if (!loggerKey) {
+			loggerKey = loggerKeys[0]; // default to winston
+		}
 
-    // create brokers
-    const brokerOptionsList = brokers || [];
-    if (brokerOptionsList.length === 0) {
-      // default broker option is moleculer
-      brokerOptionsList.push({
-        moleculer: {},
-      });
-    }
-    this.brokers = brokerOptionsList.map((brokerOpts, index) => {
-      return new ServiceBroker(
-        {
-          id: index.toString(),
-          logger: this.logger.getChild(`broker[${index}]`),
-        },
-        brokerOpts,
-      );
-    });
+		const loggerOpts = (logger && logger[loggerKey as keyof LoggerConstructorOptions]) || {};
+		const loggerConstructor = LoggerConstructors[loggerKey as keyof LoggerConstructorOptions];
+		this.logger = new loggerConstructor({ label: os.hostname() }, loggerOpts);
 
-    // create schema registry
-    this.schema = new SchemaRegistry(
-      {
-        brokers: this.brokers,
-        logger: this.logger.getChild(`schema`),
-      },
-      schema,
-    );
+		// create brokers
+		const brokerOptionsList = brokers || [];
+		if (brokerOptionsList.length === 0) {
+			// default broker option is moleculer
+			brokerOptionsList.push({
+				moleculer: {},
+			});
+		}
+		this.brokers = brokerOptionsList.map((brokerOpts, index) => {
+			return new ServiceBroker(
+				{
+					id: index.toString(),
+					logger: this.logger.getChild(`broker[${index}]`),
+				},
+				brokerOpts,
+			);
+		});
 
-    // create server
-    this.server = new APIServer(
-      {
-        schema: this.schema,
-        logger: this.logger.getChild(`server`),
-      },
-      server,
-    );
-  }
+		// create schema registry
+		this.schema = new SchemaRegistry(
+			{
+				brokers: this.brokers,
+				logger: this.logger.getChild(`schema`),
+			},
+			schema,
+		);
 
-  public get delegatedBrokers() {
-    return this.brokers.map((b) => b.delegatedBroker);
-  }
+		// create server
+		this.server = new APIServer(
+			{
+				schema: this.schema,
+				logger: this.logger.getChild(`server`),
+			},
+			server,
+		);
+	}
 
-  public async start() {
-    // catch os shutdown signal
-    if (!this.opts.skipProcessEventRegistration) {
-      for (const signal of APIGateway.ShutdownSignals) {
-        process.on(signal as any, this.handleShutdown);
-      }
-    }
+	public get delegatedBrokers() {
+		return this.brokers.map((b) => b.delegatedBroker);
+	}
 
-    // catch error
-    process.on("unhandledRejection", this.handleUncaughtError);
+	public async start() {
+		// catch os shutdown signal
+		if (!this.opts.skipProcessEventRegistration) {
+			for (const signal of APIGateway.ShutdownSignals) {
+				process.on(signal as any, this.handleShutdown);
+			}
+		}
 
-    try {
-      await this.server.start();
-    } catch (error) {
-      await this.handleUncaughtError(error);
-    }
-  }
+		// catch error
+		process.on("unhandledRejection", this.handleUncaughtError);
 
-  public async stop() {
-    if (!this.opts.skipProcessEventRegistration) {
-      for (const signal of APIGateway.ShutdownSignals) {
-        process.removeListener(signal as any, this.handleShutdown);
-      }
-    }
-    process.removeListener("unhandledRejection", this.handleUncaughtError);
-    await this.server.stop();
-  }
+		try {
+			await this.server.start();
+		} catch (error) {
+			await this.handleUncaughtError(error);
+		}
+	}
 
-  public static readonly ShutdownSignals = ["SIGINT", "SIGTERM", "SIGHUP", "beforeExit"];
+	public async stop() {
+		if (!this.opts.skipProcessEventRegistration) {
+			for (const signal of APIGateway.ShutdownSignals) {
+				process.removeListener(signal as any, this.handleShutdown);
+			}
+		}
+		process.removeListener("unhandledRejection", this.handleUncaughtError);
+		await this.server.stop();
+	}
 
-  private handleShutdown = ((...args: any) => {
-    this.logger.info(`shutdown signal received: ${args}`);
-    return this.stop();
-  }).bind(this);
+	public static readonly ShutdownSignals = ["SIGINT", "SIGTERM", "SIGHUP", "beforeExit"];
 
-  private handleUncaughtError = ((reason: any, ...args: any[]) => {
-    console.error("uncaught error:", reason, ...args);
-    if (reason instanceof FatalError) {
-      // TODO: normalize error
-      return this.stop();
-    }
-  }).bind(this);
+	private handleShutdown = ((...args: any) => {
+		this.logger.info(`shutdown signal received: ${args}`);
+		return this.stop();
+	}).bind(this);
+
+	private handleUncaughtError = ((reason: any, ...args: any[]) => {
+		console.error("uncaught error:", reason, ...args);
+		if (reason instanceof FatalError) {
+			// TODO: normalize error
+			return this.stop();
+		}
+	}).bind(this);
 }

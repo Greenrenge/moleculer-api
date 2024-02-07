@@ -6,9 +6,9 @@ export type EventPacket = { event: string; params: any; groups: string[]; broadc
 export type EventListener = (event: Readonly<EventPacket>) => void;
 
 export class EventPubSub extends PubSub<{
-  [event: string]: Readonly<EventPacket>;
+	[event: string]: Readonly<EventPacket>;
 }> {
-  constructor(protected readonly props: PubSubProps) {
-    super(props);
-  }
+	constructor(protected readonly props: PubSubProps) {
+		super(props);
+	}
 }

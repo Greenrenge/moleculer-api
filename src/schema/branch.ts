@@ -140,6 +140,7 @@ export class Branch {
     master branch can see and prefer: master-branched > non-branched services
     other branch can see and prefer: own-branched > master-branched > non-branched services
   */
+	//TODO: green begin binding schema to branch , service catalog
 	public connectService(service: Readonly<Service>, integration: ServiceAPIIntegrationSource | null): Promise<void> {
 		return Branch.lock.acquire(this.name, () => {
 			let priority: number;
@@ -240,6 +241,7 @@ export class Branch {
 		});
 	}
 
+	//TODO: green merge old,new integrations
 	/* schema integration */
 	private async consumeIntegrations(integrations: Readonly<ServiceAPIIntegration>[], initialCompile = false): Promise<void> {
 		try {

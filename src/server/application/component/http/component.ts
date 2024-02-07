@@ -7,148 +7,149 @@ import { ServerApplicationComponent, ServerApplicationComponentProps } from "../
 import { HTTPRoute, HTTPRouteInternalHandler } from "./route";
 
 export type ServerHTTPApplicationOptions = {
-  jsonSpaces: number;
-  trustProxy: boolean;
+	jsonSpaces: number;
+	trustProxy: boolean;
 };
 
+//TODO: green actual server is here (express)
 export class ServerHTTPApplication extends ServerApplicationComponent<HTTPRoute> {
-  public static readonly key = "http";
-  public readonly Route = HTTPRoute;
-  public readonly module: express.Application;
-  private readonly opts: ServerHTTPApplicationOptions;
-  private readonly routeHandlerExpressRouterMap = new Map<Readonly<RouteHandlerMap<HTTPRoute>>, express.Router>();
+	public static readonly key = "http";
+	public readonly Route = HTTPRoute;
+	public readonly module: express.Application;
+	private readonly opts: ServerHTTPApplicationOptions;
+	private readonly routeHandlerExpressRouterMap = new Map<Readonly<RouteHandlerMap<HTTPRoute>>, express.Router>();
 
-  constructor(props: ServerApplicationComponentProps, opts?: RecursivePartial<ServerHTTPApplicationOptions>) {
-    super(props);
-    this.opts = _.defaultsDeep(opts || {}, {
-      jsonSpaces: 2,
-      trustProxy: true,
-    });
+	constructor(props: ServerApplicationComponentProps, opts?: RecursivePartial<ServerHTTPApplicationOptions>) {
+		super(props);
+		this.opts = _.defaultsDeep(opts || {}, {
+			jsonSpaces: 2,
+			trustProxy: true,
+		});
 
-    // create express.Application without http.Server instance
-    this.module = express();
-    Object.assign(this.module.settings, {
-      env: "production",
-      "json spaces": this.opts.jsonSpaces || null,
-      "case sensitive routing": false,
-      "strict routing": false,
-      "trust proxy": this.opts.trustProxy,
-      "x-powered-by": false,
-    });
+		// create express.Application without http.Server instance
+		this.module = express();
+		Object.assign(this.module.settings, {
+			env: "production",
+			"json spaces": this.opts.jsonSpaces || null,
+			"case sensitive routing": false,
+			"strict routing": false,
+			"trust proxy": this.opts.trustProxy,
+			"x-powered-by": false,
+		});
 
-    // modify use method to emit mount event
-    const originalUse = this.module.use.bind(this.module);
-    this.module.use = (...args: any[]) => {
-      const result = originalUse(...args);
-      this.module.emit("update");
-      return result;
-    };
-  }
+		// modify use method to emit mount event
+		const originalUse = this.module.use.bind(this.module);
+		this.module.use = (...args: any[]) => {
+			const result = originalUse(...args);
+			this.module.emit("update");
+			return result;
+		};
+	}
 
-  /* lifecycle */
-  public async start(): Promise<void> {
-    // ...
-  }
+	/* lifecycle */
+	public async start(): Promise<void> {
+		// ...
+	}
 
-  public async stop(): Promise<void> {
-    this.routeHandlerExpressRouterMap.clear();
-  }
+	public async stop(): Promise<void> {
+		this.routeHandlerExpressRouterMap.clear();
+	}
 
-  public mountRoutes(routes: ReadonlyArray<Readonly<HTTPRoute>>, pathPrefixes: string[], createContext: APIRequestContextConstructor): Readonly<RouteHandlerMap<HTTPRoute>> {
-    // create new express.Router for given routes and mount to express.Application
-    const expressRouter = express.Router();
-    this.module.use(expressRouter);
+	public mountRoutes(routes: ReadonlyArray<Readonly<HTTPRoute>>, pathPrefixes: string[], createContext: APIRequestContextConstructor): Readonly<RouteHandlerMap<HTTPRoute>> {
+		// create new express.Router for given routes and mount to express.Application
+		const expressRouter = express.Router();
+		this.module.use(expressRouter); // TODO: green replace the routes with the new one
 
-    // create routeHandlerMap for this routes
-    const routeHandlerMap = new Map<Readonly<HTTPRoute>, HTTPRouteInternalHandler>();
+		// create routeHandlerMap for this routes
+		const routeHandlerMap = new Map<Readonly<HTTPRoute>, HTTPRouteInternalHandler>();
 
-    // link routeHandlerMap to express.Router for the time to unmount
-    this.routeHandlerExpressRouterMap.set(routeHandlerMap, expressRouter);
+		// link routeHandlerMap to express.Router for the time to unmount
+		this.routeHandlerExpressRouterMap.set(routeHandlerMap, expressRouter);
 
-    // mount each routes
-    for (const route of routes) {
-      let expressRouterMount = expressRouter.all;
-      switch (route.method) {
-        case "PATCH":
-          expressRouterMount = expressRouter.patch;
-          break;
-        case "GET":
-          expressRouterMount = expressRouter.get;
-          break;
-        case "DELETE":
-          expressRouterMount = expressRouter.delete;
-          break;
-        case "POST":
-          expressRouterMount = expressRouter.post;
-          break;
-        case "PUT":
-          expressRouterMount = expressRouter.put;
-          break;
-        default:
-          this.props.logger.error(`cannot mount route: ${route}`); // TODO: normalize error
-          continue;
-      }
-      expressRouterMount = expressRouterMount.bind(expressRouter);
+		// mount each routes
+		for (const route of routes) {
+			let expressRouterMount = expressRouter.all;
+			switch (route.method) {
+				case "PATCH":
+					expressRouterMount = expressRouter.patch;
+					break;
+				case "GET":
+					expressRouterMount = expressRouter.get;
+					break;
+				case "DELETE":
+					expressRouterMount = expressRouter.delete;
+					break;
+				case "POST":
+					expressRouterMount = expressRouter.post;
+					break;
+				case "PUT":
+					expressRouterMount = expressRouter.put;
+					break;
+				default:
+					this.props.logger.error(`cannot mount route: ${route}`); // TODO: normalize error
+					continue;
+			}
+			expressRouterMount = expressRouterMount.bind(expressRouter);
 
-      // internal handler should extract context and pass context to external handler
-      const routeHandler: HTTPRouteInternalHandler = async (req, res, next) => {
-        try {
-          // create context
-          const context = await createContext(req);
-          res.once("finish", () => context.clear());
+			// internal handler should extract context and pass context to external handler
+			const routeHandler: HTTPRouteInternalHandler = async (req, res, next) => {
+				try {
+					// create context
+					const context = await createContext(req);
+					res.once("finish", () => context.clear());
 
-          // req.params
-          req.params = route.paramKeys.reduce((obj, key, i) => {
-            obj[key.name] = req.params[i];
-            return obj;
-          }, {} as any);
+					// req.params
+					req.params = route.paramKeys.reduce((obj, key, i) => {
+						obj[key.name] = req.params[i];
+						return obj;
+					}, {} as any);
 
-          // call handler
-          await route.handler(context, req, res);
-        } catch (error) {
-          next(error);
-        }
-      };
+					// call handler
+					await route.handler(context, req, res);
+				} catch (error) {
+					next(error);
+				}
+			};
 
-      // mount handler into router
-      const pathRegExps = route.getPathRegExps(pathPrefixes);
-      for (const regExp of pathRegExps) {
-        expressRouterMount(regExp, routeHandler);
-      }
-      this.props.logger.debug(`${route} mounted on ${pathPrefixes.join(", ")}`);
+			// mount handler into router
+			const pathRegExps = route.getPathRegExps(pathPrefixes);
+			for (const regExp of pathRegExps) {
+				expressRouterMount(regExp, routeHandler);
+			}
+			this.props.logger.debug(`${route} mounted on ${pathPrefixes.join(", ")}`);
 
-      // store route and handler to map
-      routeHandlerMap.set(route, routeHandler);
-    }
+			// store route and handler to map
+			routeHandlerMap.set(route, routeHandler);
+		}
 
-    return routeHandlerMap;
-  }
+		return routeHandlerMap;
+	}
 
-  public unmountRoutes(routeHandlerMap: Readonly<RouteHandlerMap<HTTPRoute>>): void {
-    const expressRouter = this.routeHandlerExpressRouterMap.get(routeHandlerMap);
-    if (!expressRouter) {
-      this.props.logger.error(`cannot find express.Router matched for given RouteHandlerMap`, routeHandlerMap);
-      return;
-    }
+	public unmountRoutes(routeHandlerMap: Readonly<RouteHandlerMap<HTTPRoute>>): void {
+		const expressRouter = this.routeHandlerExpressRouterMap.get(routeHandlerMap);
+		if (!expressRouter) {
+			this.props.logger.error(`cannot find express.Router matched for given RouteHandlerMap`, routeHandlerMap);
+			return;
+		}
 
-    // unmount express.Router
-    this.unmountExpressRouter(expressRouter);
+		// unmount express.Router
+		this.unmountExpressRouter(expressRouter);
 
-    // forget the routeHandlerMap
-    this.routeHandlerExpressRouterMap.delete(routeHandlerMap);
-  }
+		// forget the routeHandlerMap
+		this.routeHandlerExpressRouterMap.delete(routeHandlerMap);
+	}
 
-  private unmountExpressRouter(expressRouter: express.Router, layers: any = this.module._router.stack) {
-    for (let i = layers.length - 1; i >= 0; i--) {
-      const layer = layers[i];
-      if (layer.handle === expressRouter) {
-        layers.splice(i, 1);
-      } else if (layer.route) {
-        this.unmountExpressRouter(expressRouter, layer.route.stack);
-        if (layer.route.stack.length === 0) {
-          layers.splice(i, 1);
-        }
-      }
-    }
-  }
+	private unmountExpressRouter(expressRouter: express.Router, layers: any = this.module._router.stack) {
+		for (let i = layers.length - 1; i >= 0; i--) {
+			const layer = layers[i];
+			if (layer.handle === expressRouter) {
+				layers.splice(i, 1);
+			} else if (layer.route) {
+				this.unmountExpressRouter(expressRouter, layer.route.stack);
+				if (layer.route.stack.length === 0) {
+					layers.splice(i, 1);
+				}
+			}
+		}
+	}
 }
