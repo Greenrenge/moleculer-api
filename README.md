@@ -1,5 +1,7 @@
 # Introduction
 
+![API Gateway](diagram.svg)
+
 ## moleculer-api
 
 A dynamic API Gateway which updates REST endpoints, GraphQL schema, Websocket handlers and access control policies by integrating metadata of discovered remote services.
@@ -12,33 +14,31 @@ Moleculer API Gateway는 분산 서비스 환경에서 동적으로 마이크로
 
 서비스 API 스키마가 제거, 수정, 추가되면 Gateway는 기존 통합 API 스키마에 병합을 시도하고 성공시 무중단으로 라우터를 업데이트하며 그 결과 메시지를 원격 서비스에 다시 보고합니다.
 
-
-
 ### Features
 
-* 분산 서비스의 API 스키마를 수집하고 병합하여 API를 실시간으로 업데이트
-* 개발 편의를 위한 브랜치 및 태그
-* 상태 검사 및 문서 생성
-  * API Gateway 상태 검사
-  * API 엔드포인트별 상태 검사
-  * API 엔드포인트별 설명, 파라미터, 접근 제어 정보 생성
-  * 분산 서비스 액션 및 이벤트 구독, 발행 정보 생성
-* 확장 가능한 웹 서버 구성
-  * Cookie/Body Parser
-  * ETag
-  * CORS
-  * HTTP/2
-  * TLS
-* 미들웨어 방식의 컨텍스트 생성
-  * 인증
-  * Locale
-* 프로토콜 플러그인 \(핸들러 및 스키마 확장\)
-  * REST
-  * GraphQL
-  * WebSocket \(TODO\)
-* 접근 제어 정책 플러그인 \(핸들러 및 스키마 확장\)
-  * OAuth2 scope 기반 접근 제어
-  * JavaScript [FBAC; Function Based Access Control](https://arxiv.org/abs/1609.04514) 기반 접근 제어
+- 분산 서비스의 API 스키마를 수집하고 병합하여 API를 실시간으로 업데이트
+- 개발 편의를 위한 브랜치 및 태그
+- 상태 검사 및 문서 생성
+  - API Gateway 상태 검사
+  - API 엔드포인트별 상태 검사
+  - API 엔드포인트별 설명, 파라미터, 접근 제어 정보 생성
+  - 분산 서비스 액션 및 이벤트 구독, 발행 정보 생성
+- 확장 가능한 웹 서버 구성
+  - Cookie/Body Parser
+  - ETag
+  - CORS
+  - HTTP/2
+  - TLS
+- 미들웨어 방식의 컨텍스트 생성
+  - 인증
+  - Locale
+- 프로토콜 플러그인 \(핸들러 및 스키마 확장\)
+  - REST
+  - GraphQL
+  - WebSocket \(TODO\)
+- 접근 제어 정책 플러그인 \(핸들러 및 스키마 확장\)
+  - OAuth2 scope 기반 접근 제어
+  - JavaScript [FBAC; Function Based Access Control](https://arxiv.org/abs/1609.04514) 기반 접근 제어
 
 ## How to use
 
@@ -94,21 +94,15 @@ module.exports = {
 
 ```
 
-
-
-
-
-
-
 ## Development
 
 ### 1. Yarn Scripts
 
-* `yarn dev [example=simple]` - Start development \(nodemon with ts-node\)
-* `yarn build`- Uses typescript to transpile service to javascript
-* `yarn lint` - Run TSLint
-* `yarn test` - Run tests & generate coverage report
-* `yarn test --watch` - Watch and run tests
+- `yarn dev [example=simple]` - Start development \(nodemon with ts-node\)
+- `yarn build`- Uses typescript to transpile service to javascript
+- `yarn lint` - Run TSLint
+- `yarn test` - Run tests & generate coverage report
+- `yarn test --watch` - Watch and run tests
 
 ## Contribution
 
@@ -121,4 +115,3 @@ The project is available under the [MIT license](https://tldrlegal.com/license/m
 ## Contact
 
 Copyright \(c\) 2019 QMIT Inc.
-
