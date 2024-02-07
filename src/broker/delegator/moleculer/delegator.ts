@@ -183,7 +183,7 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
       (context.meta as any).$cache = false;
     }
 
-    let response: any;
+    // let response: any;
 
     // create child context
     const ctx = Moleculer.Context.create(this.broker);
@@ -224,7 +224,7 @@ export class MoleculerServiceBrokerDelegator extends ServiceBrokerDelegator<Cont
     }
 
     // call the action
-    response = await ctx.call(action.id, callParams, callOpts);
+    const response = await ctx.call(action.id, callParams, callOpts);
 
     // streaming response (can obtain other props from ctx.meta in streaming response)
     if (isReadStream(response)) {
