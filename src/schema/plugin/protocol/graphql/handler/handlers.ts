@@ -1,6 +1,6 @@
 import * as path from "path";
 import { convertNodeHttpToRequest, runHttpQuery, processFileUploads, formatApolloErrors, GraphQLOptions } from "apollo-server-core";
-import { SubscriptionServerOptions } from "apollo-server-core/src/types";
+import { SubscriptionServerOptions } from "apollo-server-core";
 import { ApolloServer, Config as ApolloServerConfig, makeExecutableSchema } from "apollo-server-express";
 import { execute, parse, subscribe } from "graphql";
 import { IResolvers } from "graphql-tools";
