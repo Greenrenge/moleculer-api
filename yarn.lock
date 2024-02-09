@@ -1912,6 +1912,11 @@ auth-header@^1.0.0:
   resolved "https://registry.yarnpkg.com/auth-header/-/auth-header-1.0.0.tgz#ea24fdc5588e1eb8b750df8655a396aa48fc9076"
   integrity sha512-CPPazq09YVDUNNVWo4oSPTQmtwIzHusZhQmahCKvIsk0/xH6U3QsMAv3sM+7+Q0B1K2KJ/Q38OND317uXs4NHA==
 
+awesome-phonenumber@^6.4.0:
+  version "6.4.0"
+  resolved "https://registry.yarnpkg.com/awesome-phonenumber/-/awesome-phonenumber-6.4.0.tgz#7681478db1433e18ec29375ad5f647e0ab6a53b3"
+  integrity sha512-GRtyAHsD/usULDEZ8a5QQVZnvLm+WqP8q5sDPf3DkzEDGSr2DcvygGhuhWc6cTP4r28cSo0weM5eStwxJgxDoA==
+
 aws-sign2@~0.7.0:
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/aws-sign2/-/aws-sign2-0.7.0.tgz#b46e890934a9591f2d2f6f86d7e6a9f1b3fe76a8"
